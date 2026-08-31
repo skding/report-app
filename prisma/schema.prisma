@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  ENGINEER
+  MANAGER
+}
+
+enum ReportType {
+  SERVICE
+  SITE_WORK
+  MAINTENANCE
+}
+
+enum ReportStatus {
+  DRAFT
+  PENDING_SIGNATURE
+  COMPLETED
+  EMAILED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  email         String    @unique
+  name          String
+  password      String
+  role          Role      @default(ENGINEER)
+  signatureData String?   @db.Text
+  phone         String?
+  active        Boolean   @default(true)
+  reports       Report[]  @relation("AuthorReports")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Customer {
+  id            String    @id @default(cuid())
+  name          String
+  regNo         String?
+  email         String?
+  phone         String?
+  address       String?   @db.Text
+  contactPerson String?
+  sites         Site[]
+  reports       Report[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Site {
+  id                String             @id @default(cuid())
+  customerId        String
+  customer          Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name              String
+  address           String?            @db.Text
+  contactPerson     String?
+  contactPhone      String?
+  contactEmail      String?
+  defaultTemplateId String?
+  defaultTemplate   ChecklistTemplate? @relation(fields: [defaultTemplateId], references: [id], onDelete: SetNull)
+  equipment         Equipment[]
+  reports           Report[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model Equipment {
+  id          String   @id @default(cuid())
+  siteId      String
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  name        String
+  tagNo       String?
+  model       String?
+  serialNo    String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ChecklistTemplate {
+  id          String   @id @default(cuid())
+  title       String
+  category    String   @default("General Maintenance")
+  description String?  @db.Text
+  isDefault   Boolean  @default(false)
+  sections    Json     // Array of sections and checklist items with types & specs
+  sites       Site[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Report {
+  id                  String       @id @default(cuid())
+  reportNumber        String       @unique
+  type                ReportType
+  status              ReportStatus @default(DRAFT)
+  
+  customerId          String?
+  customer            Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  siteId              String?
+  site                Site?        @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  authorId            String?
+  author              User?        @relation("AuthorReports", fields: [authorId], references: [id], onDelete: SetNull)
+  
+  // Header Meta
+  title               String?
+  projectCode         String?
+  reportDate          DateTime     @default(now())
+  attendanceDate      DateTime?
+  startTime           String?
+  endTime             String?
+  normalHours         Float?
+  otHours             Float?
+
+  // Rich & Dynamic Data Payload
+  data                Json         @default("{}")
+  
+  // Media Attachments
+  photos              ReportPhoto[]
+  
+  // Digital Signatures
+  engineerName        String?
+  engineerSignature   String?      @db.Text
+  engineerSignedAt    DateTime?
+  
+  customerName        String?
+  customerDesignation String?
+  customerSignature   String?      @db.Text
+  customerSignedAt    DateTime?
+
+  // Email Tracking
+  emailedTo           String?
+  emailedAt           DateTime?
+
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+}
+
+model ReportPhoto {
+  id         String   @id @default(cuid())
+  reportId   String
+  report     Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  url        String   @db.Text
+  caption    String?  @db.Text
+  sectionKey String?
+  createdAt  DateTime @default(now())
+}
+
+model SystemSetting {
+  id            String   @id @default("default")
+  smtpHost      String?
+  smtpPort      Int?     @default(587)
+  smtpSecure    Boolean  @default(false)
+  smtpUser      String?
+  smtpPass      String?
+  smtpFromEmail String?
+  smtpFromName  String?
+  companyName   String   @default("Clover Digital Sdn Bhd")
+  companyReg    String   @default("201501034912")
+  companyAddr   String   @default("7A Jalan PP2/1, Taman Putra Prima, 47100 Puchong, Selangor")
+  companyEmail  String   @default("admin@cloverdigital.com.my")
+  companyWeb    String   @default("www.cloverdigital.com.my")
+  companyPhone  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
