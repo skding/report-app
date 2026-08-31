@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 // Helper to generate sequential report number
 async function generateReportNumber(type: string): Promise<string> {
   const currentYear = new Date().getFullYear().toString().slice(-2); // e.g. "26"

@@ -59,7 +59,10 @@ export async function getCurrentUser(): Promise<UserSession | null> {
       role: user.role as UserRole,
       signatureData: user.signatureData,
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.digest === 'DYNAMIC_SERVER_USAGE') {
+      throw error;
+    }
     console.error('Error in getCurrentUser:', error);
     return null;
   }
