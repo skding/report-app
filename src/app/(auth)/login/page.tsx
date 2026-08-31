@@ -127,33 +127,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Accounts */}
-          <div className="mt-8 pt-6 border-t border-slate-800/80">
-            <p className="text-xs text-slate-400 text-center mb-3">Quick Demo Accounts:</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin', 'admin123')}
-                className="p-2.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700 rounded-lg text-left text-xs text-slate-300 transition-colors flex flex-col"
-              >
-                <span className="font-semibold text-emerald-400 flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Admin
-                </span>
-                <span className="text-[11px] text-slate-400 mt-0.5">admin / admin123</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('skding', 'engineer123')}
-                className="p-2.5 bg-slate-800/60 hover:bg-slate-800 border border-slate-700 rounded-lg text-left text-xs text-slate-300 transition-colors flex flex-col"
-              >
-                <span className="font-semibold text-teal-400 flex items-center gap-1">
-                  <Wrench className="w-3.5 h-3.5" /> Field Engineer
-                </span>
-                <span className="text-[11px] text-slate-400 mt-0.5">skding / engineer123</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
