@@ -2,22 +2,26 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { verifyPassword, signJwtToken, COOKIE_NAME } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
   try {
     const { username, password } = await req.json();
 
     if (!username || !password) {
       return NextResponse.json(
-        { error: 'Username and password are required' },
+        { error: 'Username or email and password are required' },
         { status: 400 }
       );
     }
 
+    const cleanInput = username.trim();
+
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { username: username.toLowerCase().trim() },
-          { email: username.toLowerCase().trim() },
+          { username: { equals: cleanInput, mode: 'insensitive' } },
+          { email: { equals: cleanInput, mode: 'insensitive' } },
         ],
       },
     });
