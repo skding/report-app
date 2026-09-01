@@ -40,8 +40,25 @@ export default function NewReportPage() {
   const [otHours, setOtHours] = useState<number>(0);
   const [templates, setTemplates] = useState<any[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+  const [nextNumber, setNextNumber] = useState<string>('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
+
+  // Fetch next report number whenever type changes
+  useEffect(() => {
+    async function fetchNextNumber() {
+      try {
+        const res = await fetch(`/api/reports/next-number?type=${type}`);
+        const data = await res.json();
+        if (data.nextNumber) {
+          setNextNumber(data.nextNumber);
+        }
+      } catch (e) {
+        console.error('Error fetching next report number:', e);
+      }
+    }
+    fetchNextNumber();
+  }, [type]);
 
   // Fetch Customers and Templates
   useEffect(() => {
@@ -187,14 +204,27 @@ export default function NewReportPage() {
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-            Report Dispatch Generator
-          </span>
-          <h2 className="text-xl font-bold text-white mt-1">Create New Site Service Report</h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Choose your report category, assign client & location, and launch the split-view live editor.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+              Report Dispatch Generator
+            </span>
+            <h2 className="text-xl font-bold text-white mt-1">Create New Site Service Report</h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Choose your report category, assign client & location, and launch the split-view live editor.
+            </p>
+          </div>
+
+          {nextNumber && (
+            <div className="px-4 py-2.5 bg-slate-950 border border-emerald-500/30 rounded-xl shadow-inner text-right self-start">
+              <span className="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">
+                Auto-Assigned Number
+              </span>
+              <span className="text-sm font-mono font-bold text-emerald-400">
+                {nextNumber}
+              </span>
+            </div>
+          )}
         </div>
 
         {error && (

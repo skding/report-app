@@ -1,5 +1,5 @@
 export type ReportType = 'SERVICE' | 'SITE_WORK' | 'MAINTENANCE';
-export type ReportStatus = 'DRAFT' | 'PENDING_SIGNATURE' | 'COMPLETED' | 'EMAILED';
+export type ReportStatus = 'DRAFT' | 'PENDING_SIGNATURE' | 'COMPLETED' | 'EMAILED' | 'VOIDED' | 'ARCHIVED';
 export type UserRole = 'ADMIN' | 'ENGINEER' | 'MANAGER';
 
 export interface UserSession {

@@ -4,22 +4,35 @@ import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// Helper to generate sequential report number
+// Helper to generate sequential report number (TYPE-YY/running number)
 async function generateReportNumber(type: string): Promise<string> {
   const currentYear = new Date().getFullYear().toString().slice(-2); // e.g. "26"
   const prefix = type === 'SERVICE' ? 'ESR' : type === 'SITE_WORK' ? 'DSR' : 'PMR';
-  
-  // Count existing reports for this year and type
-  const count = await prisma.report.count({
+  const yearPattern = `${prefix}-${currentYear}/`;
+
+  const existingReports = await prisma.report.findMany({
     where: {
-      type: type as any,
       reportNumber: {
-        startsWith: `${prefix}-${currentYear}/`,
+        startsWith: yearPattern,
       },
+    },
+    select: {
+      reportNumber: true,
     },
   });
 
-  const nextSeq = (count + 1).toString().padStart(3, '0');
+  let maxSeq = 0;
+  for (const r of existingReports) {
+    const parts = r.reportNumber.split('/');
+    if (parts.length === 2) {
+      const num = parseInt(parts[1], 10);
+      if (!isNaN(num) && num > maxSeq) {
+        maxSeq = num;
+      }
+    }
+  }
+
+  const nextSeq = (maxSeq + 1).toString().padStart(3, '0');
   return `${prefix}-${currentYear}/${nextSeq}`;
 }
 

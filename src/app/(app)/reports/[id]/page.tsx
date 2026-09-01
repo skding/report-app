@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -18,9 +18,13 @@ import {
   Clock,
   Send,
   Loader2,
+  Ban,
+  Archive,
+  RotateCcw,
+  AlertTriangle,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { FullReport, ChecklistSection, UserSession } from '@/lib/types';
+import { FullReport, ChecklistSection, UserSession, ReportStatus } from '@/lib/types';
 import ServiceReportForm from '@/components/ReportForms/ServiceReportForm';
 import SiteReportForm from '@/components/ReportForms/SiteReportForm';
 import MaintenanceReportForm from '@/components/ReportForms/MaintenanceReportForm';
@@ -38,6 +42,11 @@ export default function ReportDetailPage() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'saving' | 'error'>('idle');
   const [viewMode, setViewMode] = useState<'split' | 'form' | 'preview'>('split');
+
+  // Modals for Void / Archive
+  const [showVoidModal, setShowVoidModal] = useState(false);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Load report and current user
   useEffect(() => {
@@ -80,7 +89,7 @@ export default function ReportDetailPage() {
   }, [reportId]);
 
   // Save report to server
-  const handleSave = async (updatedReport?: FullReport, markCompleted = false) => {
+  const handleSave = async (updatedReport?: FullReport, newStatus?: ReportStatus) => {
     const payload = updatedReport || report;
     if (!payload) return;
 
@@ -90,7 +99,7 @@ export default function ReportDetailPage() {
     try {
       const bodyPayload = {
         ...payload,
-        status: markCompleted ? 'COMPLETED' : payload.status,
+        status: newStatus || payload.status,
       };
 
       const res = await fetch(`/api/reports/${reportId}`, {
@@ -105,7 +114,7 @@ export default function ReportDetailPage() {
       setReport(data.report);
       setSaveStatus('saved');
 
-      if (markCompleted) {
+      if (newStatus === 'COMPLETED') {
         confetti({
           particleCount: 80,
           spread: 60,
@@ -122,7 +131,19 @@ export default function ReportDetailPage() {
     }
   };
 
+  const handleStatusChange = async (targetStatus: ReportStatus) => {
+    setActionLoading(true);
+    try {
+      await handleSave(undefined, targetStatus);
+      setShowVoidModal(false);
+      setShowArchiveModal(false);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleReportChange = (updated: FullReport) => {
+    if (report?.status === 'VOIDED') return; // Prevent edits if voided
     setReport(updated);
     setSaveStatus('idle');
   };
@@ -154,6 +175,9 @@ export default function ReportDetailPage() {
   }
 
   const isCompleted = report.status === 'COMPLETED' || report.status === 'EMAILED';
+  const isVoided = report.status === 'VOIDED';
+  const isArchived = report.status === 'ARCHIVED';
+
   const typeLabel =
     report.type === 'SERVICE'
       ? "Engineer's Service Report (ESR)"
@@ -163,6 +187,56 @@ export default function ReportDetailPage() {
 
   return (
     <div className="space-y-4 pb-12">
+      {/* Voided Alert Banner */}
+      {isVoided && (
+        <div className="p-4 bg-red-950/80 border-2 border-red-600 rounded-2xl flex items-center justify-between gap-4 text-red-200 shadow-xl animate-fade-in">
+          <div className="flex items-center gap-3">
+            <Ban className="w-6 h-6 text-red-400 shrink-0" />
+            <div>
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                This Report has been VOIDED / CANCELLED
+              </h4>
+              <p className="text-xs text-red-300">
+                The report is rendered as voided and modifications are disabled.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleStatusChange('DRAFT')}
+            disabled={actionLoading}
+            className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white border border-red-500 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-emerald-400" /> Re-open Draft
+          </button>
+        </div>
+      )}
+
+      {/* Archived Alert Banner */}
+      {isArchived && (
+        <div className="p-4 bg-slate-900/90 border border-slate-700 rounded-2xl flex items-center justify-between gap-4 text-slate-300 shadow-xl animate-fade-in">
+          <div className="flex items-center gap-3">
+            <Archive className="w-6 h-6 text-slate-400 shrink-0" />
+            <div>
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider">
+                Archived Report
+              </h4>
+              <p className="text-xs text-slate-400">
+                This report is filed in historical archives.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleStatusChange('COMPLETED')}
+            disabled={actionLoading}
+            className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-emerald-400" /> Restore Report
+          </button>
+        </div>
+      )}
+
       {/* Top Breadcrumb & Action Toolbar */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xl">
         {/* Left: Report Identifiers */}
@@ -187,6 +261,10 @@ export default function ReportDetailPage() {
                 className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${
                   report.status === 'COMPLETED' || report.status === 'EMAILED'
                     ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                    : report.status === 'VOIDED'
+                    ? 'bg-red-950 text-red-300 border-red-800'
+                    : report.status === 'ARCHIVED'
+                    ? 'bg-slate-800 text-slate-300 border-slate-700'
                     : 'bg-amber-950 text-amber-300 border-amber-800'
                 }`}
               >
@@ -254,27 +332,52 @@ export default function ReportDetailPage() {
             </span>
           )}
 
-          {/* Save Draft Button */}
-          <button
-            type="button"
-            onClick={() => handleSave()}
-            disabled={saving}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700 cursor-pointer"
-          >
-            <Save className="w-3.5 h-3.5" />
-            <span>Save Draft</span>
-          </button>
-
-          {/* Mark Complete & Finalize */}
-          {!isCompleted && (
+          {/* Save Draft Button (Only if not voided) */}
+          {!isVoided && (
             <button
               type="button"
-              onClick={() => handleSave(undefined, true)}
+              onClick={() => handleSave()}
+              disabled={saving}
+              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-700 cursor-pointer"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Save Draft</span>
+            </button>
+          )}
+
+          {/* Mark Complete & Finalize */}
+          {!isCompleted && !isVoided && (
+            <button
+              type="button"
+              onClick={() => handleSave(undefined, 'COMPLETED')}
               disabled={saving}
               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-950 transition-all cursor-pointer"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Complete & Lock</span>
+            </button>
+          )}
+
+          {/* Void & Archive Actions */}
+          {!isVoided && (
+            <button
+              type="button"
+              onClick={() => setShowVoidModal(true)}
+              className="p-2 bg-slate-800 hover:bg-red-950/60 hover:text-red-400 text-slate-400 rounded-xl border border-slate-700 transition-colors cursor-pointer"
+              title="Void / Cancel Report"
+            >
+              <Ban className="w-4 h-4" />
+            </button>
+          )}
+
+          {!isArchived && !isVoided && (
+            <button
+              type="button"
+              onClick={() => setShowArchiveModal(true)}
+              className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl border border-slate-700 transition-colors cursor-pointer"
+              title="Archive Report"
+            >
+              <Archive className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -287,7 +390,7 @@ export default function ReportDetailPage() {
           <div
             className={`${
               viewMode === 'split' ? 'lg:col-span-6 2xl:col-span-6' : 'lg:col-span-12 max-w-4xl mx-auto'
-            } space-y-6 overflow-y-auto`}
+            } space-y-6 overflow-y-auto ${isVoided ? 'opacity-60 pointer-events-none' : ''}`}
           >
             {report.type === 'SERVICE' && (
               <ServiceReportForm
@@ -331,6 +434,75 @@ export default function ReportDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Void Modal */}
+      {showVoidModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full shadow-2xl p-6 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-red-950/60 border border-red-800 text-red-400 flex items-center justify-center mx-auto">
+              <Ban className="w-6 h-6" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-base font-bold text-white">Void / Cancel Report</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Are you sure you want to void <strong className="text-white">{report.reportNumber}</strong>?
+                This report will be marked as cancelled and locked with a VOIDED watermark.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowVoidModal(false)}
+                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={() => handleStatusChange('VOIDED')}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-semibold disabled:opacity-50"
+              >
+                {actionLoading ? 'Voiding...' : 'Confirm Void'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Archive Modal */}
+      {showArchiveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full shadow-2xl p-6 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center mx-auto">
+              <Archive className="w-6 h-6" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-base font-bold text-white">Archive Report</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Move <strong className="text-white">{report.reportNumber}</strong> to archive records?
+              </p>
+            </div>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowArchiveModal(false)}
+                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={() => handleStatusChange('ARCHIVED')}
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold disabled:opacity-50"
+              >
+                {actionLoading ? 'Archiving...' : 'Archive Report'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

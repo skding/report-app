@@ -24,6 +24,8 @@ enum ReportStatus {
   PENDING_SIGNATURE
   COMPLETED
   EMAILED
+  VOIDED
+  ARCHIVED
 }
 
 model User {

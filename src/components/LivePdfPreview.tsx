@@ -186,7 +186,25 @@ export default function LivePdfPreview({
           }}
           className="my-auto pb-10"
         >
-          <div ref={printSheetRef} className="print-area shadow-2xl rounded-sm">
+          <div ref={printSheetRef} className="print-area shadow-2xl rounded-sm relative overflow-hidden">
+            {/* VOIDED Watermark Overlay */}
+            {report.status === 'VOIDED' && (
+              <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center overflow-hidden">
+                <div className="text-red-600/30 text-7xl md:text-8xl font-black uppercase tracking-widest -rotate-45 border-8 border-red-600/30 px-12 py-4 rounded-3xl select-none">
+                  VOIDED
+                </div>
+              </div>
+            )}
+
+            {/* ARCHIVED Tag */}
+            {report.status === 'ARCHIVED' && (
+              <div className="absolute top-6 right-6 z-20 pointer-events-none">
+                <span className="text-[10px] font-bold font-mono uppercase px-3 py-1 bg-slate-900/90 text-slate-400 border border-slate-600 rounded-md shadow">
+                  ARCHIVED RECORD
+                </span>
+              </div>
+            )}
+
             {report.type === 'SERVICE' && <ServiceReportSheet report={report} />}
             {report.type === 'SITE_WORK' && <SiteReportSheet report={report} />}
             {report.type === 'MAINTENANCE' && (

@@ -275,6 +275,10 @@ export default function DashboardPage() {
                       ? { label: 'Completed', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' }
                       : report.status === 'EMAILED'
                       ? { label: 'Emailed', color: 'bg-blue-500/10 text-blue-400 border-blue-500/30' }
+                      : report.status === 'VOIDED'
+                      ? { label: 'Voided', color: 'bg-red-500/10 text-red-400 border-red-500/30' }
+                      : report.status === 'ARCHIVED'
+                      ? { label: 'Archived', color: 'bg-slate-800 text-slate-400 border-slate-700' }
                       : { label: 'Draft', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
 
                   return (
