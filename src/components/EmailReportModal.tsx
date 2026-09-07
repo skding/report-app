@@ -27,7 +27,7 @@ export default function EmailReportModal({
   );
   const [customMessage, setCustomMessage] = useState(
     `Please find attached the official report (${report.reportNumber}) for site work conducted on ${new Date(
-      report.reportDate
+      report.attendanceDate || report.reportDate
     ).toLocaleDateString('en-GB')}.`
   );
   const [sending, setSending] = useState(false);

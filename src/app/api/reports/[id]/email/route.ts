@@ -56,7 +56,7 @@ export async function POST(
         <div style="background-color: #ffffff; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
           <p>Dear ${report.customerName || report.customer?.contactPerson || 'Customer'},</p>
           
-          <p>${customMessage || `Please find attached the official <strong>${reportTypeLabel} (${report.reportNumber})</strong> for site work performed on ${new Date(report.reportDate).toLocaleDateString('en-GB')}.`}</p>
+          <p>${customMessage || `Please find attached the official <strong>${reportTypeLabel} (${report.reportNumber})</strong> for site work performed on ${new Date(report.attendanceDate || report.reportDate).toLocaleDateString('en-GB')}.`}</p>
           
           <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
             <tr style="border-bottom: 1px solid #e2e8f0;">

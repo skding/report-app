@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PenTool, CheckCircle2, UserCheck, ShieldAlert, Plus, Trash2 } from 'lucide-react';
+import { PenTool, CheckCircle2, UserCheck, ShieldAlert, Plus, Trash2, Calendar, Clock } from 'lucide-react';
 import { FullReport, ServiceReportData, UserSession } from '@/lib/types';
 import PhotoUploader from '../PhotoUploader';
 import SignaturePadModal from '../SignaturePadModal';
@@ -22,6 +22,27 @@ export default function ServiceReportForm({
   const data = (report.data || {}) as ServiceReportData;
   const [sigModalType, setSigModalType] = useState<'engineer' | 'customer' | null>(null);
   const [newTagInput, setNewTagInput] = useState('');
+
+  const formatDateForInput = (dateStr?: string | null) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      return d.toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
+  const handleDateChange = (val: string) => {
+    if (!val) return;
+    const iso = new Date(val).toISOString();
+    onChange({
+      ...report,
+      attendanceDate: iso,
+      reportDate: iso,
+    });
+  };
 
   const updateDataField = (field: keyof ServiceReportData, value: any) => {
     onChange({
@@ -110,6 +131,51 @@ export default function ServiceReportForm({
             placeholder="e.g. VFD Critical Output Failure & Replacement Assessment"
             className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
           />
+        </div>
+
+        {/* Date & Timing Parameters */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800">
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+              Service Date <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="date"
+              disabled={disabled}
+              value={formatDateForInput(report.attendanceDate || report.reportDate)}
+              onChange={(e) => handleDateChange(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              Start Time
+            </label>
+            <input
+              type="text"
+              disabled={disabled}
+              value={report.startTime || ''}
+              onChange={(e) => onChange({ ...report, startTime: e.target.value })}
+              placeholder="08:30 AM"
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              End Time
+            </label>
+            <input
+              type="text"
+              disabled={disabled}
+              value={report.endTime || ''}
+              onChange={(e) => onChange({ ...report, endTime: e.target.value })}
+              placeholder="05:30 PM"
+              className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
         </div>
 
         {/* Equipment Tags */}

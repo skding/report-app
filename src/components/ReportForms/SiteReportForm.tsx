@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Clock, PenTool, CheckCircle2, UserCheck, Briefcase, FileText } from 'lucide-react';
+import { Clock, PenTool, CheckCircle2, UserCheck, Briefcase, FileText, Calendar } from 'lucide-react';
 import { FullReport, SiteReportData, UserSession } from '@/lib/types';
 import PhotoUploader from '../PhotoUploader';
 import SignaturePadModal from '../SignaturePadModal';
@@ -21,6 +21,27 @@ export default function SiteReportForm({
 }: SiteReportFormProps) {
   const data = (report.data || {}) as SiteReportData;
   const [sigModalType, setSigModalType] = useState<'witness' | 'verified' | null>(null);
+
+  const formatDateForInput = (dateStr?: string | null) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      return d.toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
+  const handleDateChange = (val: string) => {
+    if (!val) return;
+    const iso = new Date(val).toISOString();
+    onChange({
+      ...report,
+      attendanceDate: iso,
+      reportDate: iso,
+    });
+  };
 
   const updateDataField = (field: keyof SiteReportData, value: any) => {
     onChange({
@@ -66,8 +87,8 @@ export default function SiteReportForm({
           Project & Attendance Parameters
         </h4>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="sm:col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">
               Project Title <span className="text-red-400">*</span>
             </label>
@@ -91,6 +112,19 @@ export default function SiteReportForm({
               onChange={(e) => onChange({ ...report, projectCode: e.target.value })}
               placeholder="e.g. CAOP-IDN-2026 / PJ-8812"
               className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+              Attendance Date <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="date"
+              disabled={disabled}
+              value={formatDateForInput(report.attendanceDate || report.reportDate)}
+              onChange={(e) => handleDateChange(e.target.value)}
+              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
             />
           </div>
         </div>

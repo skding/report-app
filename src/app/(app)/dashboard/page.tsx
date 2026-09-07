@@ -310,7 +310,7 @@ export default function DashboardPage() {
                         {report.title || 'Untitled Report'}
                       </td>
                       <td className="p-3.5 whitespace-nowrap text-slate-400">
-                        {new Date(report.reportDate).toLocaleDateString('en-GB')}
+                        {new Date(report.attendanceDate || report.reportDate).toLocaleDateString('en-GB')}
                       </td>
                       <td className="p-3.5 whitespace-nowrap text-slate-300">
                         {report.engineerName || report.author?.name || '—'}

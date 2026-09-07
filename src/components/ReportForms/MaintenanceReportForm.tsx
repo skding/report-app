@@ -11,6 +11,8 @@ import {
   ClipboardList,
   Sparkles,
   Zap,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 import {
   FullReport,
@@ -41,6 +43,27 @@ export default function MaintenanceReportForm({
   const responses = data.checklistResponses || {};
   const [sigModalType, setSigModalType] = useState<'engineer' | 'customer' | null>(null);
   const [newCustomItemText, setNewCustomItemText] = useState('');
+
+  const formatDateForInput = (dateStr?: string | null) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      return d.toISOString().split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
+  const handleDateChange = (val: string) => {
+    if (!val) return;
+    const iso = new Date(val).toISOString();
+    onChange({
+      ...report,
+      attendanceDate: iso,
+      reportDate: iso,
+    });
+  };
 
   // Helper to update a checklist item response
   const setItemResponse = (
@@ -155,6 +178,43 @@ export default function MaintenanceReportForm({
 
   return (
     <div className="space-y-6 text-sm">
+      {/* Maintenance & Attendance Parameters */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-4">
+        <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+          <Sparkles className="w-4 h-4" />
+          Preventive Maintenance Parameters
+        </h4>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-medium text-slate-300 mb-1">
+              Maintenance Subject / Title <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              disabled={disabled}
+              value={report.title || ''}
+              onChange={(e) => onChange({ ...report, title: e.target.value })}
+              placeholder="e.g. Routine Preventive Maintenance Service"
+              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+              Service / PM Date <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="date"
+              disabled={disabled}
+              value={formatDateForInput(report.attendanceDate || report.reportDate)}
+              onChange={(e) => handleDateChange(e.target.value)}
+              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Checklist Stats Banner */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between">
         <div className="flex items-center gap-3">

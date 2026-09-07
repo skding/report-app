@@ -170,6 +170,7 @@ export default function NewReportPage() {
               ? 'Site Engineering & Technical Support'
               : 'Routine Preventive Maintenance Service'),
           projectCode: projectCode.trim() || null,
+          reportDate: new Date(attendanceDate).toISOString(),
           attendanceDate: new Date(attendanceDate).toISOString(),
           startTime,
           endTime,
@@ -412,8 +413,9 @@ export default function NewReportPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">
-                  Attendance Date
+                <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                  Service / Attendance Date <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="date"
