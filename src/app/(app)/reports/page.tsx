@@ -101,16 +101,16 @@ export default function ReportsListPage() {
     }
   };
 
-  // Bulk archive all closed reports in view
+  // Bulk archive all closed or voided reports in view
   const handleArchiveAllClosed = async () => {
     const closedReports = filteredReports.filter(
-      (r) => r.status === 'COMPLETED' || r.status === 'EMAILED'
+      (r) => r.status === 'COMPLETED' || r.status === 'EMAILED' || r.status === 'VOIDED'
     );
     if (closedReports.length === 0) return;
 
     if (
       !window.confirm(
-        `Are you sure you want to archive all ${closedReports.length} closed report(s)? They will be moved to the Archived view.`
+        `Are you sure you want to archive all ${closedReports.length} closed / voided report(s)? They will be moved to the Archived view.`
       )
     ) {
       return;
@@ -168,7 +168,7 @@ export default function ReportsListPage() {
   });
 
   const closedCountInView = filteredReports.filter(
-    (r) => r.status === 'COMPLETED' || r.status === 'EMAILED'
+    (r) => r.status === 'COMPLETED' || r.status === 'EMAILED' || r.status === 'VOIDED'
   ).length;
 
   return (
@@ -243,21 +243,21 @@ export default function ReportsListPage() {
             </button>
           </div>
 
-          {/* Quick Bulk Archive for Closed Reports */}
+          {/* Quick Bulk Archive for Closed / Voided Reports */}
           {viewTab === 'active' && closedCountInView > 0 && (
             <button
               type="button"
               onClick={handleArchiveAllClosed}
               disabled={bulkArchiving}
               className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors self-start sm:self-auto cursor-pointer"
-              title="Archive all completed/emailed reports currently shown in this list"
+              title="Archive all completed, emailed, or voided reports currently shown in this list"
             >
               {bulkArchiving ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
               ) : (
                 <Archive className="w-3.5 h-3.5 text-amber-400" />
               )}
-              <span>Archive All Closed ({closedCountInView})</span>
+              <span>Archive Closed / Voided ({closedCountInView})</span>
             </button>
           )}
         </div>
@@ -377,8 +377,10 @@ export default function ReportsListPage() {
                       ? { label: 'Archived', color: 'bg-slate-800 text-slate-400 border-slate-700' }
                       : { label: 'Draft', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
 
-                  const isClosed =
-                    report.status === 'COMPLETED' || report.status === 'EMAILED';
+                  const canArchive =
+                    report.status === 'COMPLETED' ||
+                    report.status === 'EMAILED' ||
+                    report.status === 'VOIDED';
                   const isArchived = report.status === 'ARCHIVED';
 
                   return (
@@ -424,8 +426,8 @@ export default function ReportsListPage() {
                       </td>
                       <td className="p-3.5 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Archive Action for Closed Reports */}
-                          {isClosed && (
+                          {/* Archive Action for Closed or Voided Reports */}
+                          {canArchive && (
                             <button
                               type="button"
                               onClick={(e) => {
@@ -434,7 +436,11 @@ export default function ReportsListPage() {
                               }}
                               disabled={actionLoadingId === report.id}
                               className="p-1.5 bg-slate-800 hover:bg-slate-700 hover:text-amber-400 text-slate-400 rounded-lg transition-colors cursor-pointer"
-                              title="Archive this closed report"
+                              title={
+                                report.status === 'VOIDED'
+                                  ? 'Archive this voided report'
+                                  : 'Archive this closed report'
+                              }
                             >
                               {actionLoadingId === report.id ? (
                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

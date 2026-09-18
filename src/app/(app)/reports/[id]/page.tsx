@@ -204,14 +204,24 @@ export default function ReportDetailPage() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => handleStatusChange('DRAFT')}
-            disabled={actionLoading}
-            className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white border border-red-500 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-emerald-400" /> Re-open Draft
-          </button>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setShowArchiveModal(true)}
+              disabled={actionLoading}
+              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 hover:border-slate-500 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Archive className="w-3.5 h-3.5 text-slate-400" /> Archive Voided Report
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStatusChange('DRAFT')}
+              disabled={actionLoading}
+              className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white border border-red-500 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-emerald-400" /> Re-open Draft
+            </button>
+          </div>
         </div>
       )}
 
@@ -385,19 +395,23 @@ export default function ReportDetailPage() {
             </button>
           )}
 
-          {!isArchived && !isVoided && (
+          {!isArchived && (
             <button
               type="button"
               onClick={() => setShowArchiveModal(true)}
               className={`p-2 rounded-xl border border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 ${
-                isCompleted
+                isCompleted || isVoided
                   ? 'px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white'
                   : 'bg-slate-800 hover:bg-slate-700 text-slate-400'
               }`}
-              title="Archive Report"
+              title={isVoided ? 'Archive Voided Report' : 'Archive Report'}
             >
               <Archive className="w-4 h-4 text-slate-400" />
-              {isCompleted && <span className="text-xs font-semibold">Archive Report</span>}
+              {(isCompleted || isVoided) && (
+                <span className="text-xs font-semibold">
+                  {isVoided ? 'Archive Voided' : 'Archive Report'}
+                </span>
+              )}
             </button>
           )}
         </div>
