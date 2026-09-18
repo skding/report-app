@@ -16,6 +16,10 @@ import {
   RefreshCw,
   Building,
   Calendar,
+  Archive,
+  RotateCcw,
+  CheckCircle2,
+  Loader2,
 } from 'lucide-react';
 import { FullReport, ReportType } from '@/lib/types';
 
@@ -28,6 +32,9 @@ export default function ReportsListPage() {
   const [filterType, setFilterType] = useState<string>(initialType);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewTab, setViewTab] = useState<'active' | 'archived' | 'all'>('active');
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [bulkArchiving, setBulkArchiving] = useState(false);
 
   const fetchReports = async () => {
     setLoading(true);
@@ -52,9 +59,102 @@ export default function ReportsListPage() {
     }
   }, [searchParams]);
 
+  // Archive a single report
+  const handleArchive = async (id: string) => {
+    setActionLoadingId(id);
+    try {
+      const res = await fetch(`/api/reports/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'ARCHIVED' }),
+      });
+      if (res.ok) {
+        setReports((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, status: 'ARCHIVED' } : r))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to archive report:', err);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Restore an archived report
+  const handleRestore = async (id: string) => {
+    setActionLoadingId(id);
+    try {
+      const res = await fetch(`/api/reports/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'COMPLETED' }),
+      });
+      if (res.ok) {
+        setReports((prev) =>
+          prev.map((r) => (r.id === id ? { ...r, status: 'COMPLETED' } : r))
+        );
+      }
+    } catch (err) {
+      console.error('Failed to restore report:', err);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Bulk archive all closed reports in view
+  const handleArchiveAllClosed = async () => {
+    const closedReports = filteredReports.filter(
+      (r) => r.status === 'COMPLETED' || r.status === 'EMAILED'
+    );
+    if (closedReports.length === 0) return;
+
+    if (
+      !window.confirm(
+        `Are you sure you want to archive all ${closedReports.length} closed report(s)? They will be moved to the Archived view.`
+      )
+    ) {
+      return;
+    }
+
+    setBulkArchiving(true);
+    try {
+      await Promise.all(
+        closedReports.map((r) =>
+          fetch(`/api/reports/${r.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'ARCHIVED' }),
+          })
+        )
+      );
+      setReports((prev) =>
+        prev.map((r) =>
+          closedReports.some((c) => c.id === r.id) ? { ...r, status: 'ARCHIVED' } : r
+        )
+      );
+    } catch (err) {
+      console.error('Error during bulk archive:', err);
+    } finally {
+      setBulkArchiving(false);
+    }
+  };
+
+  // Calculate counts for tabs
+  const activeCount = reports.filter((r) => r.status !== 'ARCHIVED').length;
+  const archivedCount = reports.filter((r) => r.status === 'ARCHIVED').length;
+
   const filteredReports = reports.filter((r) => {
+    // View Tab filter
+    if (viewTab === 'active' && r.status === 'ARCHIVED') return false;
+    if (viewTab === 'archived' && r.status !== 'ARCHIVED') return false;
+
+    // Type filter
     if (filterType !== 'ALL' && r.type !== filterType) return false;
+
+    // Status filter
     if (filterStatus !== 'ALL' && r.status !== filterStatus) return false;
+
+    // Search query
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
       const matchNo = r.reportNumber.toLowerCase().includes(q);
@@ -66,6 +166,10 @@ export default function ReportsListPage() {
     }
     return true;
   });
+
+  const closedCountInView = filteredReports.filter(
+    (r) => r.status === 'COMPLETED' || r.status === 'EMAILED'
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -86,8 +190,78 @@ export default function ReportsListPage() {
         </Link>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+      {/* View Tabs & Main Filter Toolbar */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-4">
+        {/* Top bar: Tabs & Bulk Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
+          {/* Active vs Archived View Tabs */}
+          <div className="flex rounded-xl bg-slate-950 p-1 border border-slate-800 text-xs self-start">
+            <button
+              onClick={() => setViewTab('active')}
+              className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-2 ${
+                viewTab === 'active'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <span>Active Reports</span>
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                  viewTab === 'active' ? 'bg-emerald-700 text-white' : 'bg-slate-800 text-slate-400'
+                }`}
+              >
+                {activeCount}
+              </span>
+            </button>
+            <button
+              onClick={() => setViewTab('archived')}
+              className={`px-3.5 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-2 ${
+                viewTab === 'archived'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Archive className="w-3.5 h-3.5" />
+              <span>Archived</span>
+              <span
+                className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                  viewTab === 'archived' ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-400'
+                }`}
+              >
+                {archivedCount}
+              </span>
+            </button>
+            <button
+              onClick={() => setViewTab('all')}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                viewTab === 'all'
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              All
+            </button>
+          </div>
+
+          {/* Quick Bulk Archive for Closed Reports */}
+          {viewTab === 'active' && closedCountInView > 0 && (
+            <button
+              type="button"
+              onClick={handleArchiveAllClosed}
+              disabled={bulkArchiving}
+              className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors self-start sm:self-auto cursor-pointer"
+              title="Archive all completed/emailed reports currently shown in this list"
+            >
+              {bulkArchiving ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+              ) : (
+                <Archive className="w-3.5 h-3.5 text-amber-400" />
+              )}
+              <span>Archive All Closed ({closedCountInView})</span>
+            </button>
+          )}
+        </div>
+
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Search bar */}
           <div className="relative flex-1 max-w-md">
@@ -178,7 +352,9 @@ export default function ReportsListPage() {
               ) : filteredReports.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="p-8 text-center text-slate-500">
-                    No reports found matching the criteria.
+                    {viewTab === 'archived'
+                      ? 'No archived reports found.'
+                      : 'No reports found matching the criteria.'}
                   </td>
                 </tr>
               ) : (
@@ -200,6 +376,10 @@ export default function ReportsListPage() {
                       : report.status === 'ARCHIVED'
                       ? { label: 'Archived', color: 'bg-slate-800 text-slate-400 border-slate-700' }
                       : { label: 'Draft', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
+
+                  const isClosed =
+                    report.status === 'COMPLETED' || report.status === 'EMAILED';
+                  const isArchived = report.status === 'ARCHIVED';
 
                   return (
                     <tr
@@ -244,6 +424,46 @@ export default function ReportsListPage() {
                       </td>
                       <td className="p-3.5 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
+                          {/* Archive Action for Closed Reports */}
+                          {isClosed && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleArchive(report.id);
+                              }}
+                              disabled={actionLoadingId === report.id}
+                              className="p-1.5 bg-slate-800 hover:bg-slate-700 hover:text-amber-400 text-slate-400 rounded-lg transition-colors cursor-pointer"
+                              title="Archive this closed report"
+                            >
+                              {actionLoadingId === report.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Archive className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          )}
+
+                          {/* Restore Action for Archived Reports */}
+                          {isArchived && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRestore(report.id);
+                              }}
+                              disabled={actionLoadingId === report.id}
+                              className="p-1.5 bg-slate-800 hover:bg-slate-700 hover:text-emerald-400 text-slate-400 rounded-lg transition-colors cursor-pointer"
+                              title="Restore to Completed"
+                            >
+                              {actionLoadingId === report.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <RotateCcw className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          )}
+
                           <Link
                             href={`/reports/${report.id}`}
                             className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition-colors"

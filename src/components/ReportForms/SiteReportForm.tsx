@@ -1,8 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Clock, PenTool, CheckCircle2, UserCheck, Briefcase, FileText, Calendar } from 'lucide-react';
-import { FullReport, SiteReportData, UserSession } from '@/lib/types';
+import {
+  Clock,
+  PenTool,
+  CheckCircle2,
+  UserCheck,
+  Briefcase,
+  FileText,
+  Calendar,
+  Plus,
+  Trash2,
+  Layers,
+} from 'lucide-react';
+import { FullReport, SiteReportData, SiteDayActivity, UserSession } from '@/lib/types';
 import PhotoUploader from '../PhotoUploader';
 import SignaturePadModal from '../SignaturePadModal';
 
@@ -33,14 +44,107 @@ export default function SiteReportForm({
     }
   };
 
-  const handleDateChange = (val: string) => {
-    if (!val) return;
-    const iso = new Date(val).toISOString();
+  // Helper to extract or synthesize days array
+  const getInitialDays = (): SiteDayActivity[] => {
+    if (data.days && data.days.length > 0) {
+      return data.days;
+    }
+    const defaultDate =
+      formatDateForInput(report.attendanceDate || report.reportDate) ||
+      new Date().toISOString().split('T')[0];
+    return [
+      {
+        id: 'day-1',
+        dayNumber: 1,
+        date: defaultDate,
+        startTime: report.startTime || '08:30 AM',
+        endTime: report.endTime || '06:30 PM',
+        normalHours: report.normalHours ?? 8,
+        otHours: report.otHours ?? 0,
+        workDescription: data.workDescription || '',
+        personInCharge: data.personInCharge || report.engineerName || '',
+      },
+    ];
+  };
+
+  const days: SiteDayActivity[] = getInitialDays();
+
+  // Helper to synchronize days array changes with report
+  const updateDays = (newDays: SiteDayActivity[]) => {
+    const indexedDays = newDays.map((d, i) => ({
+      ...d,
+      dayNumber: i + 1,
+    }));
+
+    const totalNormal = indexedDays.reduce((acc, d) => acc + (Number(d.normalHours) || 0), 0);
+    const totalOt = indexedDays.reduce((acc, d) => acc + (Number(d.otHours) || 0), 0);
+    const firstDay = indexedDays[0];
+
+    // Create a combined formatted work description for any legacy consumers
+    const combinedDesc =
+      indexedDays.length === 1
+        ? indexedDays[0].workDescription
+        : indexedDays
+            .map(
+              (d, idx) =>
+                `DAY ${idx + 1} (${d.date || 'Date N/A'})\n--------------------\n${d.workDescription || 'No activities logged.'}`
+            )
+            .join('\n\n');
+
     onChange({
       ...report,
-      attendanceDate: iso,
-      reportDate: iso,
+      normalHours: totalNormal,
+      otHours: totalOt,
+      attendanceDate: firstDay?.date ? new Date(firstDay.date).toISOString() : report.attendanceDate,
+      startTime: firstDay?.startTime || report.startTime,
+      endTime: firstDay?.endTime || report.endTime,
+      data: {
+        ...data,
+        days: indexedDays,
+        workDescription: combinedDesc,
+      },
     });
+  };
+
+  const handleAddDay = () => {
+    const lastDay = days[days.length - 1];
+    let nextDate = '';
+    if (lastDay?.date) {
+      const d = new Date(lastDay.date);
+      d.setDate(d.getDate() + 1);
+      nextDate = d.toISOString().split('T')[0];
+    } else {
+      nextDate = new Date().toISOString().split('T')[0];
+    }
+
+    const newDay: SiteDayActivity = {
+      id: `day-${Date.now()}`,
+      dayNumber: days.length + 1,
+      date: nextDate,
+      startTime: lastDay?.startTime || '08:30 AM',
+      endTime: lastDay?.endTime || '06:30 PM',
+      normalHours: 8,
+      otHours: 0,
+      workDescription: '',
+      personInCharge: lastDay?.personInCharge || '',
+    };
+
+    updateDays([...days, newDay]);
+  };
+
+  const handleRemoveDay = (dayIndex: number) => {
+    if (days.length <= 1) return;
+    const newDays = days.filter((_, idx) => idx !== dayIndex);
+    updateDays(newDays);
+  };
+
+  const handleUpdateDayField = (dayIndex: number, field: keyof SiteDayActivity, val: any) => {
+    const newDays = [...days];
+    newDays[dayIndex] = {
+      ...newDays[dayIndex],
+      [field]: val,
+    };
+    updateDays(newDays);
   };
 
   const updateDataField = (field: keyof SiteReportData, value: any) => {
@@ -78,17 +182,21 @@ export default function SiteReportForm({
     setSigModalType(null);
   };
 
+  const totalNormalHours = days.reduce((acc, d) => acc + (Number(d.normalHours) || 0), 0);
+  const totalOtHours = days.reduce((acc, d) => acc + (Number(d.otHours) || 0), 0);
+  const totalOverallHours = totalNormalHours + totalOtHours;
+
   return (
     <div className="space-y-6 text-sm">
-      {/* Project & Timing Details */}
+      {/* Project Details */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-4">
         <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
           <Briefcase className="w-4 h-4" />
-          Project & Attendance Parameters
+          Project Parameters
         </h4>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="sm:col-span-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">
               Project Title <span className="text-red-400">*</span>
             </label>
@@ -114,95 +222,183 @@ export default function SiteReportForm({
               className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
             />
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1 flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-              Attendance Date <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="date"
-              disabled={disabled}
-              value={formatDateForInput(report.attendanceDate || report.reportDate)}
-              onChange={(e) => handleDateChange(e.target.value)}
-              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-        </div>
-
-        {/* Time & Normal / OT Hours */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-800">
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Start Time</label>
-            <input
-              type="text"
-              disabled={disabled}
-              value={report.startTime || ''}
-              onChange={(e) => onChange({ ...report, startTime: e.target.value })}
-              placeholder="08:30 AM"
-              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">End Time</label>
-            <input
-              type="text"
-              disabled={disabled}
-              value={report.endTime || ''}
-              onChange={(e) => onChange({ ...report, endTime: e.target.value })}
-              placeholder="06:30 PM"
-              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">Normal Hours</label>
-            <input
-              type="number"
-              step="0.5"
-              disabled={disabled}
-              value={report.normalHours || ''}
-              onChange={(e) => onChange({ ...report, normalHours: parseFloat(e.target.value) || 0 })}
-              placeholder="8.0"
-              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">OT Hours</label>
-            <input
-              type="number"
-              step="0.5"
-              disabled={disabled}
-              value={report.otHours || ''}
-              onChange={(e) => onChange({ ...report, otHours: parseFloat(e.target.value) || 0 })}
-              placeholder="2.0"
-              className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500"
-            />
-          </div>
         </div>
       </div>
 
-      {/* Work Description / Activity Log */}
+      {/* Multi-Day Activity Schedule */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-4">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-          <FileText className="w-4 h-4" />
-          Work Description & Daily Activity Log
-        </h4>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+              <Layers className="w-4 h-4" />
+              Daily Site Activity Schedule ({days.length} {days.length === 1 ? 'Day' : 'Days'})
+            </h4>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Log activities across single or multiple days. Total hours are automatically calculated.
+            </p>
+          </div>
 
-        <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1">
-            Detailed Breakdown of Work Done <span className="text-red-400">*</span>
-          </label>
-          <textarea
-            rows={8}
-            disabled={disabled}
-            value={data.workDescription || ''}
-            onChange={(e) => updateDataField('workDescription', e.target.value)}
-            placeholder="1. Latest graphic updated at SCADA workstation.&#10;2. H2O and PFAD flow to sonification tank configured...&#10;3. Site commissioning and meeting with client lead..."
-            className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 leading-relaxed font-mono text-xs"
-          />
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Live Hours Summary Badge */}
+            <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 text-xs">
+              <span className="text-slate-400 font-medium">Total:</span>
+              <span className="text-emerald-400 font-semibold">{totalNormalHours}h Normal</span>
+              <span className="text-slate-600">•</span>
+              <span className="text-amber-400 font-semibold">{totalOtHours}h OT</span>
+              <span className="text-slate-600">•</span>
+              <span className="text-white font-bold">{totalOverallHours}h Overall</span>
+            </div>
+
+            {!disabled && (
+              <button
+                type="button"
+                onClick={handleAddDay}
+                className="px-3 py-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-teal-950 transition-all cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Day</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Days List */}
+        <div className="space-y-4">
+          {days.map((day, idx) => (
+            <div
+              key={day.id || `day-${idx}`}
+              className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3 relative transition-all"
+            >
+              {/* Day Header Bar */}
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-lg bg-teal-950 text-teal-300 font-bold text-xs border border-teal-800">
+                    Day {idx + 1}
+                  </span>
+                  {day.date && (
+                    <span className="text-xs font-medium text-slate-400">
+                      {new Date(day.date).toLocaleDateString('en-GB', {
+                        weekday: 'short',
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  )}
+                  <span className="text-[11px] text-slate-500">
+                    ({(Number(day.normalHours) || 0) + (Number(day.otHours) || 0)}h)
+                  </span>
+                </div>
+
+                {!disabled && days.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveDay(idx)}
+                    className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-950/40 rounded-lg transition-colors cursor-pointer"
+                    title={`Remove Day ${idx + 1}`}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Day Timing Parameters */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1 flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-teal-400" />
+                    Date <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    disabled={disabled}
+                    value={day.date || ''}
+                    onChange={(e) => handleUpdateDayField(idx, 'date', e.target.value)}
+                    className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Start Time</label>
+                  <input
+                    type="text"
+                    disabled={disabled}
+                    value={day.startTime || ''}
+                    onChange={(e) => handleUpdateDayField(idx, 'startTime', e.target.value)}
+                    placeholder="08:30 AM"
+                    className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">End Time</label>
+                  <input
+                    type="text"
+                    disabled={disabled}
+                    value={day.endTime || ''}
+                    onChange={(e) => handleUpdateDayField(idx, 'endTime', e.target.value)}
+                    placeholder="06:30 PM"
+                    className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">Normal Hours</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    disabled={disabled}
+                    value={day.normalHours ?? ''}
+                    onChange={(e) =>
+                      handleUpdateDayField(idx, 'normalHours', parseFloat(e.target.value) || 0)
+                    }
+                    placeholder="8.0"
+                    className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-300 mb-1">OT Hours</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    disabled={disabled}
+                    value={day.otHours ?? ''}
+                    onChange={(e) =>
+                      handleUpdateDayField(idx, 'otHours', parseFloat(e.target.value) || 0)
+                    }
+                    placeholder="0.0"
+                    className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+              </div>
+
+              {/* Day Work Description */}
+              <div>
+                <label className="block text-[11px] font-medium text-slate-300 mb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <FileText className="w-3 h-3 text-blue-400" />
+                    Detailed Activities for Day {idx + 1} <span className="text-red-400">*</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-normal">
+                    Numbered checklist or bullet breakdown
+                  </span>
+                </label>
+                <textarea
+                  rows={5}
+                  disabled={disabled}
+                  value={day.workDescription || ''}
+                  onChange={(e) => handleUpdateDayField(idx, 'workDescription', e.target.value)}
+                  placeholder={`1. Arrived on site at ${day.startTime || '08:30 AM'}...\n2. Performed equipment calibration and verified parameters...\n3. Tested communication protocol with SCADA...`}
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-600 focus:outline-none focus:border-teal-500 leading-relaxed font-mono text-xs"
+                />
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Site Notes & Next actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-800">
           <div>
             <label className="block text-xs font-medium text-slate-300 mb-1">
               Next Action Required / Standby

@@ -22,6 +22,7 @@ import {
   Archive,
   RotateCcw,
   AlertTriangle,
+  Building,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { FullReport, ChecklistSection, UserSession, ReportStatus } from '@/lib/types';
@@ -29,6 +30,7 @@ import ServiceReportForm from '@/components/ReportForms/ServiceReportForm';
 import SiteReportForm from '@/components/ReportForms/SiteReportForm';
 import MaintenanceReportForm from '@/components/ReportForms/MaintenanceReportForm';
 import LivePdfPreview from '@/components/LivePdfPreview';
+import ChangeCustomerSiteModal from '@/components/ChangeCustomerSiteModal';
 
 export default function ReportDetailPage() {
   const params = useParams();
@@ -43,9 +45,10 @@ export default function ReportDetailPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'saving' | 'error'>('idle');
   const [viewMode, setViewMode] = useState<'split' | 'form' | 'preview'>('split');
 
-  // Modals for Void / Archive
+  // Modals for Void / Archive / Change Customer
   const [showVoidModal, setShowVoidModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showChangeCustomerModal, setShowChangeCustomerModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Load report and current user
@@ -271,10 +274,22 @@ export default function ReportDetailPage() {
                 {report.status}
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">
-              Customer: <strong className="text-slate-200">{report.customer?.name}</strong> • Site:{' '}
-              <strong className="text-slate-200">{report.site?.name}</strong>
-            </p>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <p className="text-xs text-slate-400">
+                Customer: <strong className="text-slate-200">{report.customer?.name || 'Unassigned'}</strong> • Site:{' '}
+                <strong className="text-slate-200">{report.site?.name || 'Unassigned'}</strong>
+              </p>
+              {!isVoided && (
+                <button
+                  type="button"
+                  onClick={() => setShowChangeCustomerModal(true)}
+                  className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 hover:border-emerald-500/50 rounded text-[11px] font-semibold transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Change customer or site location (e.g. if selected by mistake)"
+                >
+                  <Building className="w-3 h-3" /> Change Customer / Site
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -374,10 +389,15 @@ export default function ReportDetailPage() {
             <button
               type="button"
               onClick={() => setShowArchiveModal(true)}
-              className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl border border-slate-700 transition-colors cursor-pointer"
+              className={`p-2 rounded-xl border border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 ${
+                isCompleted
+                  ? 'px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-400'
+              }`}
               title="Archive Report"
             >
-              <Archive className="w-4 h-4" />
+              <Archive className="w-4 h-4 text-slate-400" />
+              {isCompleted && <span className="text-xs font-semibold">Archive Report</span>}
             </button>
           )}
         </div>
@@ -503,6 +523,18 @@ export default function ReportDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Change Customer & Site Modal */}
+      <ChangeCustomerSiteModal
+        report={report}
+        isOpen={showChangeCustomerModal}
+        onClose={() => setShowChangeCustomerModal(false)}
+        onSuccess={(updatedReport) => {
+          setReport(updatedReport);
+          setSaveStatus('saved');
+          setTimeout(() => setSaveStatus('idle'), 2500);
+        }}
+      />
     </div>
   );
 }

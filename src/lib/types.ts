@@ -61,6 +61,18 @@ export interface ServiceReportData {
   spareParts?: Array<{ item: string; partNo?: string; qty: number; remarks?: string }>;
 }
 
+export interface SiteDayActivity {
+  id: string;
+  dayNumber?: number;
+  date: string; // YYYY-MM-DD
+  startTime?: string;
+  endTime?: string;
+  normalHours?: number;
+  otHours?: number;
+  workDescription: string;
+  personInCharge?: string;
+}
+
 export interface SiteReportData {
   workDescription: string;
   personInCharge?: string;
@@ -69,6 +81,7 @@ export interface SiteReportData {
   siteNotes?: string;
   nextActionRequired?: string;
   followUpDate?: string;
+  days?: SiteDayActivity[];
 }
 
 export interface MaintenanceReportData {

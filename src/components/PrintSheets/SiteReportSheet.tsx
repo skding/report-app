@@ -10,9 +10,24 @@ interface SiteReportSheetProps {
 
 export default function SiteReportSheet({ report }: SiteReportSheetProps) {
   const data = (report.data || {}) as SiteReportData;
-  const attendanceFormatted = report.attendanceDate
+  const days = data.days && data.days.length > 0 ? data.days : null;
+  const isMultiDay = Boolean(days && days.length > 1);
+
+  let attendanceFormatted = report.attendanceDate
     ? new Date(report.attendanceDate).toLocaleDateString('en-GB')
     : new Date(report.reportDate).toLocaleDateString('en-GB');
+
+  if (isMultiDay && days) {
+    const firstDate = days[0]?.date
+      ? new Date(days[0].date).toLocaleDateString('en-GB')
+      : '';
+    const lastDate = days[days.length - 1]?.date
+      ? new Date(days[days.length - 1].date).toLocaleDateString('en-GB')
+      : '';
+    attendanceFormatted = `${firstDate} - ${lastDate} (${days.length} Days)`;
+  }
+
+  const totalHours = (report.normalHours || 0) + (report.otHours || 0);
 
   return (
     <div className="bg-white text-slate-900 p-6 md:p-8 font-sans max-w-[820px] mx-auto text-[11px] leading-normal shadow-lg border border-slate-200">
@@ -78,17 +93,33 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
               Time & Hours:
             </td>
             <td className="p-2 border border-slate-400">
-              <div className="flex items-center gap-3">
-                <span>
-                  <strong>Time:</strong> {report.startTime || '08:30'} - {report.endTime || '18:30'}
-                </span>
-                <span>
-                  <strong>Normal:</strong> {report.normalHours || 8}h
-                </span>
-                <span>
-                  <strong>OT:</strong> {report.otHours || 0}h
-                </span>
-              </div>
+              {isMultiDay && days ? (
+                <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                  <span>
+                    <strong>Total:</strong> {report.normalHours || 0}h Normal
+                  </span>
+                  <span>•</span>
+                  <span>
+                    <strong>OT:</strong> {report.otHours || 0}h
+                  </span>
+                  <span>•</span>
+                  <span>
+                    <strong>Overall:</strong> {totalHours}h ({days.length} Days)
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <span>
+                    <strong>Time:</strong> {report.startTime || '08:30'} - {report.endTime || '18:30'}
+                  </span>
+                  <span>
+                    <strong>Normal:</strong> {report.normalHours || 8}h
+                  </span>
+                  <span>
+                    <strong>OT:</strong> {report.otHours || 0}h
+                  </span>
+                </div>
+              )}
             </td>
           </tr>
         </tbody>
@@ -96,12 +127,49 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
 
       {/* Work Description Section */}
       <div className="mb-4">
-        <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
-          Work Description / Activity Log
+        <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider flex items-center justify-between">
+          <span>Work Description / Activity Log</span>
+          {isMultiDay && days && (
+            <span className="text-[10px] text-teal-300 font-normal">
+              {days.length} Days Logged
+            </span>
+          )}
         </div>
-        <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[220px] whitespace-pre-line text-slate-800 text-justify leading-relaxed">
-          {data.workDescription || 'No work description entered.'}
-        </div>
+
+        {days && days.length > 0 ? (
+          <div className="border border-slate-400 border-t-0 divide-y divide-slate-300 bg-white min-h-[220px]">
+            {days.map((day, idx) => (
+              <div key={day.id || idx} className="p-3 space-y-1.5">
+                {isMultiDay && (
+                  <div className="flex items-center justify-between bg-slate-100 px-2 py-1 rounded border border-slate-200 text-[10px] text-slate-800 font-semibold">
+                    <span className="font-bold text-slate-900">
+                      DAY {idx + 1}
+                      {day.date
+                        ? ` — ${new Date(day.date).toLocaleDateString('en-GB', {
+                            weekday: 'short',
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })}`
+                        : ''}
+                    </span>
+                    <span className="text-slate-600 font-mono text-[9px]">
+                      {day.startTime && day.endTime ? `${day.startTime} - ${day.endTime} | ` : ''}
+                      Normal: {day.normalHours ?? 8}h | OT: {day.otHours ?? 0}h
+                    </span>
+                  </div>
+                )}
+                <div className="whitespace-pre-line text-slate-800 text-justify leading-relaxed pl-1">
+                  {day.workDescription || 'No activities logged.'}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[220px] whitespace-pre-line text-slate-800 text-justify leading-relaxed">
+            {data.workDescription || 'No work description entered.'}
+          </div>
+        )}
       </div>
 
       {/* Follow up / Next actions if any */}
