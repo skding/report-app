@@ -82,9 +82,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
         <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
           Reported Fault / Problem Description
         </div>
-        <div className="border border-slate-400 border-t-0 p-2.5 bg-slate-50/50 min-h-[32px] whitespace-pre-line text-slate-800">
-          {data.reportedFault || 'No fault description provided.'}
-        </div>
+        <div className="border border-slate-400 border-t-0 p-2.5 bg-slate-50/50 min-h-[30px] whitespace-pre-line text-slate-800">{(data.reportedFault || 'No fault description provided.').trim()}</div>
       </div>
 
       {/* Engineer's Report */}
@@ -92,9 +90,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
         <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
           Engineer's Report & Findings
         </div>
-        <div className="border border-slate-400 border-t-0 p-2.5 bg-white min-h-[70px] whitespace-pre-line text-slate-800 text-justify leading-relaxed">
-          {data.engineersReport || 'No engineer findings provided.'}
-        </div>
+        <div className="border border-slate-400 border-t-0 p-2.5 bg-white min-h-[70px] whitespace-pre-line text-slate-800 text-justify leading-relaxed">{(data.engineersReport || 'No engineer findings provided.').trim()}</div>
       </div>
 
       {/* Downtime Risk & Operational Efficiency Analysis */}
@@ -109,17 +105,13 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
                 <td className="w-1/4 bg-amber-50/80 p-2 font-bold border border-slate-400 text-amber-900 align-top">
                   Repair Option:
                 </td>
-                <td className="w-3/4 p-2 border border-slate-400 bg-white whitespace-pre-line">
-                  {data.downtimeRisk.repair || '—'}
-                </td>
+                <td className="w-3/4 p-2 border border-slate-400 bg-white whitespace-pre-line">{(data.downtimeRisk.repair || '—').trim()}</td>
               </tr>
               <tr>
                 <td className="w-1/4 bg-emerald-50/80 p-2 font-bold border border-slate-400 text-emerald-900 align-top">
                   Replacement Option:
                 </td>
-                <td className="w-3/4 p-2 border border-slate-400 bg-white whitespace-pre-line">
-                  {data.downtimeRisk.replacement || '—'}
-                </td>
+                <td className="w-3/4 p-2 border border-slate-400 bg-white whitespace-pre-line">{(data.downtimeRisk.replacement || '—').trim()}</td>
               </tr>
             </tbody>
           </table>
@@ -132,9 +124,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
           <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
             Recommendations & Action Required
           </div>
-          <div className="border border-slate-400 border-t-0 p-2.5 bg-white whitespace-pre-line text-slate-800 leading-relaxed">
-            {data.recommendations}
-          </div>
+          <div className="border border-slate-400 border-t-0 p-2.5 bg-white whitespace-pre-line text-slate-800 leading-relaxed">{(data.recommendations || '—').trim()}</div>
         </div>
       )}
 
@@ -156,7 +146,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
             }`}
           >
             {report.photos.map((photo, idx) => (
-              <div key={idx} className="border border-slate-200 p-1.5 bg-slate-50 flex flex-col items-center avoid-break">
+              <div key={idx} className="border border-slate-200 p-1.5 pb-2 bg-slate-50 flex flex-col items-center avoid-break">
                 <div
                   className={`w-full flex items-center justify-center bg-white overflow-hidden border border-slate-200 ${
                     report.photos.length === 1
@@ -175,7 +165,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
                   />
                 </div>
                 {photo.caption && (
-                  <p className="text-[10px] font-medium text-slate-700 mt-1 text-center truncate w-full" title={photo.caption}>
+                  <p className="text-[10px] font-medium text-slate-700 mt-1.5 text-center leading-snug w-full px-1 break-words">
                     Fig {idx + 1}: {photo.caption}
                   </p>
                 )}
@@ -189,7 +179,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
       <div className="mt-4 border-t-2 border-slate-400 pt-2.5 avoid-break">
         <div className="grid grid-cols-2 gap-4">
           {/* Attended By (Engineer) */}
-          <div className="border border-slate-400 p-2.5 bg-slate-50/50 flex flex-col justify-between h-32">
+          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between min-h-[155px] h-[155px]">
             <div>
               <p className="font-bold text-slate-900 uppercase text-[11px] border-b border-slate-300 pb-1">
                 Attended By:
@@ -197,19 +187,19 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
               <p className="text-[10px] text-slate-600">Clover Digital Service Engineer</p>
             </div>
 
-            <div className="flex-1 flex items-center justify-center my-1">
+            <div className="flex-1 flex items-center justify-center my-1.5">
               {report.engineerSignature ? (
                 <img
                   src={report.engineerSignature}
                   alt="Engineer Signature"
-                  className="max-h-14 max-w-full object-contain"
+                  className="max-h-16 max-w-full object-contain"
                 />
               ) : (
-                <span className="text-slate-400 italic text-[11px]">[Pending Signature]</span>
+                <span className="text-slate-400 italic text-[11px] py-2">[Pending Signature]</span>
               )}
             </div>
 
-            <div className="border-t border-slate-300 pt-1 text-[10px]">
+            <div className="border-t border-slate-300 pt-1.5 text-[10px]">
               <p><strong>Name:</strong> {report.engineerName || report.author?.name || 'SK Ding'}</p>
               <p>
                 <strong>Date:</strong>{' '}
@@ -221,7 +211,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
           </div>
 
           {/* Customer Signature */}
-          <div className="border border-slate-400 p-2.5 bg-slate-50/50 flex flex-col justify-between h-32">
+          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between min-h-[155px] h-[155px]">
             <div>
               <p className="font-bold text-slate-900 uppercase text-[11px] border-b border-slate-300 pb-1">
                 Verified By:
@@ -229,19 +219,19 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
               <p className="text-[10px] text-slate-600">Customer Representative Signature</p>
             </div>
 
-            <div className="flex-1 flex items-center justify-center my-1">
+            <div className="flex-1 flex items-center justify-center my-1.5">
               {report.customerSignature ? (
                 <img
                   src={report.customerSignature}
                   alt="Customer Signature"
-                  className="max-h-14 max-w-full object-contain"
+                  className="max-h-16 max-w-full object-contain"
                 />
               ) : (
-                <span className="text-slate-400 italic text-[11px]">[Pending Customer Signature]</span>
+                <span className="text-slate-400 italic text-[11px] py-2">[Pending Customer Signature]</span>
               )}
             </div>
 
-            <div className="border-t border-slate-300 pt-1 text-[10px]">
+            <div className="border-t border-slate-300 pt-1.5 text-[10px]">
               <p>
                 <strong>Name:</strong> {report.customerName || report.customer?.contactPerson || '—'}
                 {report.customerDesignation ? ` (${report.customerDesignation})` : ''}

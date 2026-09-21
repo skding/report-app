@@ -189,10 +189,7 @@ export default function MaintenanceReportSheet({
         <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
           2. Concerns & Suggestions
         </div>
-        <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[90px] whitespace-pre-line text-slate-800 text-justify">
-          {data.concernsAndSuggestions ||
-            'System is operating in healthy condition. Recommended to perform regular quarterly backup of SCADA runtime database and PLC controllers.'}
-        </div>
+        <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[90px] whitespace-pre-line text-slate-800 text-justify">{(data.concernsAndSuggestions || 'System is operating in healthy condition. Recommended to perform regular quarterly backup of SCADA runtime database and PLC controllers.').trim()}</div>
       </div>
 
       {/* Section 3: Reporting Notice */}
@@ -203,22 +200,42 @@ export default function MaintenanceReportSheet({
 
       {/* Attached Photos */}
       {report.photos && report.photos.length > 0 && (
-        <div className="mb-4 page-break-inside-avoid">
+        <div className="mb-3 avoid-break">
           <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider mb-2">
             Site Maintenance Photos ({report.photos.length})
           </div>
-          <div className="grid grid-cols-2 gap-3 border border-slate-300 p-2 rounded">
+          <div
+            className={`grid gap-2 border border-slate-300 p-2 rounded ${
+              report.photos.length === 1
+                ? 'grid-cols-1 max-w-sm mx-auto'
+                : report.photos.length === 3
+                ? 'grid-cols-3'
+                : report.photos.length >= 5
+                ? 'grid-cols-3'
+                : 'grid-cols-2'
+            }`}
+          >
             {report.photos.map((photo, idx) => (
-              <div key={idx} className="border border-slate-200 p-1.5 bg-slate-50 flex flex-col items-center">
-                <div className="h-44 w-full flex items-center justify-center bg-white overflow-hidden border border-slate-200">
+              <div key={idx} className="border border-slate-200 p-1.5 pb-2 bg-slate-50 flex flex-col items-center avoid-break">
+                <div
+                  className={`w-full flex items-center justify-center bg-white overflow-hidden border border-slate-200 ${
+                    report.photos.length === 1
+                      ? 'h-48'
+                      : report.photos.length === 3
+                      ? 'h-32'
+                      : report.photos.length >= 5
+                      ? 'h-28'
+                      : 'h-36'
+                  }`}
+                >
                   <img
                     src={photo.url}
                     alt={photo.caption || `PM Photo ${idx + 1}`}
-                    className="max-h-44 max-w-full object-contain"
+                    className="max-h-full max-w-full object-contain"
                   />
                 </div>
                 {photo.caption && (
-                  <p className="text-[10px] font-medium text-slate-700 mt-1 text-center truncate w-full">
+                  <p className="text-[10px] font-medium text-slate-700 mt-1.5 text-center leading-snug w-full px-1 break-words">
                     Fig {idx + 1}: {photo.caption}
                   </p>
                 )}

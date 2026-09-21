@@ -159,16 +159,12 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
                     </span>
                   </div>
                 )}
-                <div className="whitespace-pre-line text-slate-800 text-justify leading-relaxed pl-1">
-                  {day.workDescription || 'No activities logged.'}
-                </div>
+                <div className="whitespace-pre-line text-slate-800 text-justify leading-relaxed pl-1">{(day.workDescription || 'No activities logged.').trim()}</div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[220px] whitespace-pre-line text-slate-800 text-justify leading-relaxed">
-            {data.workDescription || 'No work description entered.'}
-          </div>
+          <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[220px] whitespace-pre-line text-slate-800 text-justify leading-relaxed">{(data.workDescription || 'No work description entered.').trim()}</div>
         )}
       </div>
 
@@ -180,13 +176,13 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
           </div>
           <div className="border border-slate-400 border-t-0 p-3 bg-slate-50/50 text-slate-800 space-y-1">
             {data.nextActionRequired && (
-              <p><strong>Next Action:</strong> {data.nextActionRequired}</p>
+              <p><strong>Next Action:</strong> {data.nextActionRequired.trim()}</p>
             )}
             {data.followUpDate && (
               <p><strong>Target Date:</strong> {data.followUpDate}</p>
             )}
             {data.siteNotes && (
-              <p className="whitespace-pre-line"><strong>Notes:</strong> {data.siteNotes}</p>
+              <p className="whitespace-pre-line"><strong>Notes:</strong> {data.siteNotes.trim()}</p>
             )}
           </div>
         </div>
@@ -210,7 +206,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
             }`}
           >
             {report.photos.map((photo, idx) => (
-              <div key={idx} className="border border-slate-200 p-1.5 bg-slate-50 flex flex-col items-center avoid-break">
+              <div key={idx} className="border border-slate-200 p-1.5 pb-2 bg-slate-50 flex flex-col items-center avoid-break">
                 <div
                   className={`w-full flex items-center justify-center bg-white overflow-hidden border border-slate-200 ${
                     report.photos.length === 1
@@ -229,7 +225,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
                   />
                 </div>
                 {photo.caption && (
-                  <p className="text-[10px] font-medium text-slate-700 mt-1 text-center truncate w-full" title={photo.caption}>
+                  <p className="text-[10px] font-medium text-slate-700 mt-1.5 text-center leading-snug w-full px-1 break-words">
                     Fig {idx + 1}: {photo.caption}
                   </p>
                 )}
@@ -246,7 +242,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
         </div>
         <div className="grid grid-cols-2 gap-4">
           {/* Witness by */}
-          <div className="border border-slate-400 p-2.5 bg-slate-50/50 flex flex-col justify-between h-32">
+          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between min-h-[155px] h-[155px]">
             <div>
               <p className="font-bold text-slate-900 uppercase text-[11px] border-b border-slate-300 pb-1">
                 Witnessed By:
@@ -254,19 +250,19 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
               <p className="text-[10px] text-slate-600">Client / Site Operations</p>
             </div>
 
-            <div className="flex-1 flex items-center justify-center my-1">
+            <div className="flex-1 flex items-center justify-center my-1.5">
               {report.customerSignature ? (
                 <img
                   src={report.customerSignature}
                   alt="Witness Signature"
-                  className="max-h-14 max-w-full object-contain"
+                  className="max-h-16 max-w-full object-contain"
                 />
               ) : (
-                <span className="text-slate-400 italic text-[11px]">[Pending Witness Signature]</span>
+                <span className="text-slate-400 italic text-[11px] py-2">[Pending Witness Signature]</span>
               )}
             </div>
 
-            <div className="border-t border-slate-300 pt-1 text-[10px]">
+            <div className="border-t border-slate-300 pt-1.5 text-[10px]">
               <p>
                 <strong>Name:</strong> {report.customerName || data.witnessName || '—'}
                 {report.customerDesignation ? ` (${report.customerDesignation})` : ''}
@@ -281,7 +277,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
           </div>
 
           {/* Verified by (Engineer) */}
-          <div className="border border-slate-400 p-2.5 bg-slate-50/50 flex flex-col justify-between h-32">
+          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between min-h-[155px] h-[155px]">
             <div>
               <p className="font-bold text-slate-900 uppercase text-[11px] border-b border-slate-300 pb-1">
                 Verified By:
@@ -289,19 +285,19 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
               <p className="text-[10px] text-slate-600">CDSB Lead Engineer / Technical Lead</p>
             </div>
 
-            <div className="flex-1 flex items-center justify-center my-1">
+            <div className="flex-1 flex items-center justify-center my-1.5">
               {report.engineerSignature ? (
                 <img
                   src={report.engineerSignature}
                   alt="Verified Signature"
-                  className="max-h-14 max-w-full object-contain"
+                  className="max-h-16 max-w-full object-contain"
                 />
               ) : (
-                <span className="text-slate-400 italic text-[11px]">[Pending Engineer Signature]</span>
+                <span className="text-slate-400 italic text-[11px] py-2">[Pending Engineer Signature]</span>
               )}
             </div>
 
-            <div className="border-t border-slate-300 pt-1 text-[10px]">
+            <div className="border-t border-slate-300 pt-1.5 text-[10px]">
               <p><strong>Name:</strong> {report.engineerName || data.verifiedName || report.author?.name || 'SK Ding'}</p>
               <p>
                 <strong>Date:</strong>{' '}
