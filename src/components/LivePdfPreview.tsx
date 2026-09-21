@@ -41,7 +41,17 @@ export default function LivePdfPreview({
         backgroundColor: '#ffffff',
         width: 794,
         windowWidth: 794,
+        scrollY: 0,
+        scrollX: 0,
         onclone: (clonedDoc) => {
+          // Critical fix: prevent Tailwind block img from causing ghost line-breaks and shifting text down
+          const style = clonedDoc.createElement('style');
+          style.textContent = `
+            img { display: inline-block !important; vertical-align: middle; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          `;
+          clonedDoc.head.appendChild(style);
+
           const clonedZoom = clonedDoc.getElementById('preview-zoom-container');
           if (clonedZoom) {
             clonedZoom.style.transform = 'none';

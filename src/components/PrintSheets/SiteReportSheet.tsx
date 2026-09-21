@@ -3,6 +3,7 @@
 import React from 'react';
 import PrintHeader from './PrintHeader';
 import { FullReport, SiteReportData } from '@/lib/types';
+import { renderMultilineText } from './printUtils';
 
 interface SiteReportSheetProps {
   report: FullReport;
@@ -159,12 +160,16 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
                     </span>
                   </div>
                 )}
-                <div className="whitespace-pre-line text-slate-800 text-justify leading-relaxed pl-1">{(day.workDescription || 'No activities logged.').trim()}</div>
+                <div className="text-slate-800 text-justify leading-normal pl-1">
+                  {renderMultilineText(day.workDescription, 'No activities logged.')}
+                </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[220px] whitespace-pre-line text-slate-800 text-justify leading-relaxed">{(data.workDescription || 'No work description entered.').trim()}</div>
+          <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[220px] text-slate-800 text-justify leading-normal">
+            {renderMultilineText(data.workDescription, 'No work description entered.')}
+          </div>
         )}
       </div>
 
@@ -182,7 +187,9 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
               <p><strong>Target Date:</strong> {data.followUpDate}</p>
             )}
             {data.siteNotes && (
-              <p className="whitespace-pre-line"><strong>Notes:</strong> {data.siteNotes.trim()}</p>
+              <div className="leading-normal">
+                <strong>Notes:</strong> {renderMultilineText(data.siteNotes)}
+              </div>
             )}
           </div>
         </div>
@@ -221,13 +228,13 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
                   <img
                     src={photo.url}
                     alt={photo.caption || `Site Photo ${idx + 1}`}
-                    className="max-h-full max-w-full object-contain"
+                    className="max-h-full max-w-full object-contain inline-block"
                   />
                 </div>
                 {photo.caption && (
-                  <p className="text-[10px] font-medium text-slate-700 mt-1.5 text-center leading-snug w-full px-1 break-words">
+                  <div className="w-full text-[10px] font-medium text-slate-700 mt-1 text-center leading-tight px-1 break-words">
                     Fig {idx + 1}: {photo.caption}
-                  </p>
+                  </div>
                 )}
               </div>
             ))}
@@ -255,7 +262,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
                 <img
                   src={report.customerSignature}
                   alt="Witness Signature"
-                  className="max-h-16 max-w-full object-contain"
+                  className="max-h-16 max-w-full object-contain inline-block"
                 />
               ) : (
                 <span className="text-slate-400 italic text-[11px] py-2">[Pending Witness Signature]</span>
@@ -290,7 +297,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
                 <img
                   src={report.engineerSignature}
                   alt="Verified Signature"
-                  className="max-h-16 max-w-full object-contain"
+                  className="max-h-16 max-w-full object-contain inline-block"
                 />
               ) : (
                 <span className="text-slate-400 italic text-[11px] py-2">[Pending Engineer Signature]</span>

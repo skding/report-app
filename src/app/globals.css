@@ -11,6 +11,11 @@
   body {
     @apply bg-slate-900 text-slate-100 font-sans antialiased min-h-screen selection:bg-emerald-500 selection:text-white;
   }
+
+  /* Critical fix for html2canvas: prevent Tailwind block img from adding ghost line-breaks */
+  img {
+    @apply inline-block;
+  }
 }
 
 /* Custom Scrollbars */

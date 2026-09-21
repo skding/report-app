@@ -22,7 +22,7 @@ export default function PrintHeader({
             <img
               src="/cloverdigital-logo.png"
               alt="Clover Digital"
-              className="max-h-12 max-w-full object-contain"
+              className="max-h-12 max-w-full object-contain inline-block"
             />
           </div>
           <div className="text-[11px] leading-tight text-slate-800 border-l border-slate-300 pl-3">

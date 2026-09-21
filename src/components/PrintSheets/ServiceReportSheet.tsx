@@ -3,6 +3,7 @@
 import React from 'react';
 import PrintHeader from './PrintHeader';
 import { FullReport, ServiceReportData } from '@/lib/types';
+import { renderMultilineText } from './printUtils';
 
 interface ServiceReportSheetProps {
   report: FullReport;
@@ -82,7 +83,9 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
         <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
           Reported Fault / Problem Description
         </div>
-        <div className="border border-slate-400 border-t-0 p-2.5 bg-slate-50/50 min-h-[30px] whitespace-pre-line text-slate-800">{(data.reportedFault || 'No fault description provided.').trim()}</div>
+        <div className="border border-slate-400 border-t-0 p-2.5 bg-slate-50/50 min-h-[30px] text-slate-800 leading-normal">
+          {renderMultilineText(data.reportedFault, 'No fault description provided.')}
+        </div>
       </div>
 
       {/* Engineer's Report */}
@@ -90,7 +93,9 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
         <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
           Engineer's Report & Findings
         </div>
-        <div className="border border-slate-400 border-t-0 p-2.5 bg-white min-h-[70px] whitespace-pre-line text-slate-800 text-justify leading-relaxed">{(data.engineersReport || 'No engineer findings provided.').trim()}</div>
+        <div className="border border-slate-400 border-t-0 p-2.5 bg-white min-h-[70px] text-slate-800 text-justify leading-normal">
+          {renderMultilineText(data.engineersReport, 'No engineer findings provided.')}
+        </div>
       </div>
 
       {/* Downtime Risk & Operational Efficiency Analysis */}
@@ -105,13 +110,17 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
                 <td className="w-1/4 bg-amber-50/80 p-2 font-bold border border-slate-400 text-amber-900 align-top">
                   Repair Option:
                 </td>
-                <td className="w-3/4 p-2 border border-slate-400 bg-white whitespace-pre-line">{(data.downtimeRisk.repair || '—').trim()}</td>
+                <td className="w-3/4 p-2 border border-slate-400 bg-white leading-normal">
+                  {renderMultilineText(data.downtimeRisk.repair, '—')}
+                </td>
               </tr>
               <tr>
                 <td className="w-1/4 bg-emerald-50/80 p-2 font-bold border border-slate-400 text-emerald-900 align-top">
                   Replacement Option:
                 </td>
-                <td className="w-3/4 p-2 border border-slate-400 bg-white whitespace-pre-line">{(data.downtimeRisk.replacement || '—').trim()}</td>
+                <td className="w-3/4 p-2 border border-slate-400 bg-white leading-normal">
+                  {renderMultilineText(data.downtimeRisk.replacement, '—')}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -124,7 +133,9 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
           <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
             Recommendations & Action Required
           </div>
-          <div className="border border-slate-400 border-t-0 p-2.5 bg-white whitespace-pre-line text-slate-800 leading-relaxed">{(data.recommendations || '—').trim()}</div>
+          <div className="border border-slate-400 border-t-0 p-2.5 bg-white text-slate-800 leading-normal">
+            {renderMultilineText(data.recommendations, '—')}
+          </div>
         </div>
       )}
 
@@ -161,13 +172,13 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
                   <img
                     src={photo.url}
                     alt={photo.caption || `Site Photo ${idx + 1}`}
-                    className="max-h-full max-w-full object-contain"
+                    className="max-h-full max-w-full object-contain inline-block"
                   />
                 </div>
                 {photo.caption && (
-                  <p className="text-[10px] font-medium text-slate-700 mt-1.5 text-center leading-snug w-full px-1 break-words">
+                  <div className="w-full text-[10px] font-medium text-slate-700 mt-1 text-center leading-tight px-1 break-words">
                     Fig {idx + 1}: {photo.caption}
-                  </p>
+                  </div>
                 )}
               </div>
             ))}
@@ -192,7 +203,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
                 <img
                   src={report.engineerSignature}
                   alt="Engineer Signature"
-                  className="max-h-16 max-w-full object-contain"
+                  className="max-h-16 max-w-full object-contain inline-block"
                 />
               ) : (
                 <span className="text-slate-400 italic text-[11px] py-2">[Pending Signature]</span>
@@ -224,7 +235,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
                 <img
                   src={report.customerSignature}
                   alt="Customer Signature"
-                  className="max-h-16 max-w-full object-contain"
+                  className="max-h-16 max-w-full object-contain inline-block"
                 />
               ) : (
                 <span className="text-slate-400 italic text-[11px] py-2">[Pending Customer Signature]</span>

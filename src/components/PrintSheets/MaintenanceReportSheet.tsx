@@ -3,6 +3,7 @@
 import React from 'react';
 import PrintHeader from './PrintHeader';
 import { FullReport, MaintenanceReportData, ChecklistSection } from '@/lib/types';
+import { renderMultilineText } from './printUtils';
 
 interface MaintenanceReportSheetProps {
   report: FullReport;
@@ -189,7 +190,12 @@ export default function MaintenanceReportSheet({
         <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
           2. Concerns & Suggestions
         </div>
-        <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[90px] whitespace-pre-line text-slate-800 text-justify">{(data.concernsAndSuggestions || 'System is operating in healthy condition. Recommended to perform regular quarterly backup of SCADA runtime database and PLC controllers.').trim()}</div>
+        <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[90px] text-slate-800 text-justify leading-normal">
+          {renderMultilineText(
+            data.concernsAndSuggestions,
+            'System is operating in healthy condition. Recommended to perform regular quarterly backup of SCADA runtime database and PLC controllers.'
+          )}
+        </div>
       </div>
 
       {/* Section 3: Reporting Notice */}
@@ -231,13 +237,13 @@ export default function MaintenanceReportSheet({
                   <img
                     src={photo.url}
                     alt={photo.caption || `PM Photo ${idx + 1}`}
-                    className="max-h-full max-w-full object-contain"
+                    className="max-h-full max-w-full object-contain inline-block"
                   />
                 </div>
                 {photo.caption && (
-                  <p className="text-[10px] font-medium text-slate-700 mt-1.5 text-center leading-snug w-full px-1 break-words">
+                  <div className="w-full text-[10px] font-medium text-slate-700 mt-1 text-center leading-tight px-1 break-words">
                     Fig {idx + 1}: {photo.caption}
-                  </p>
+                  </div>
                 )}
               </div>
             ))}
@@ -262,7 +268,7 @@ export default function MaintenanceReportSheet({
                 <img
                   src={report.engineerSignature}
                   alt="Engineer Signature"
-                  className="max-h-20 max-w-full object-contain"
+                  className="max-h-20 max-w-full object-contain inline-block"
                 />
               ) : (
                 <span className="text-slate-400 italic text-[11px]">[Pending Engineer Signature]</span>
@@ -294,7 +300,7 @@ export default function MaintenanceReportSheet({
                 <img
                   src={report.customerSignature}
                   alt="Customer Signature"
-                  className="max-h-20 max-w-full object-contain"
+                  className="max-h-20 max-w-full object-contain inline-block"
                 />
               ) : (
                 <span className="text-slate-400 italic text-[11px]">[Pending Customer Signature]</span>
