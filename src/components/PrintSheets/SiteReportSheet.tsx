@@ -249,7 +249,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
         </div>
         <div className="grid grid-cols-2 gap-4">
           {/* Witness by */}
-          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between min-h-[155px] h-[155px]">
+          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between h-44">
             <div>
               <p className="font-bold text-slate-900 uppercase text-[11px] border-b border-slate-300 pb-1">
                 Witnessed By:
@@ -257,19 +257,19 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
               <p className="text-[10px] text-slate-600">Client / Site Operations</p>
             </div>
 
-            <div className="flex-1 flex items-center justify-center my-1.5">
+            <div className="flex-1 flex items-center justify-center my-1">
               {report.customerSignature ? (
                 <img
                   src={report.customerSignature}
                   alt="Witness Signature"
-                  className="max-h-16 max-w-full object-contain inline-block"
+                  className="max-h-20 max-w-full object-contain inline-block"
                 />
               ) : (
-                <span className="text-slate-400 italic text-[11px] py-2">[Pending Witness Signature]</span>
+                <span className="text-slate-400 italic text-[11px]">[Pending Witness Signature]</span>
               )}
             </div>
 
-            <div className="border-t border-slate-300 pt-1.5 text-[10px]">
+            <div className="border-t border-slate-300 pt-1 text-[10px]">
               <p>
                 <strong>Name:</strong> {report.customerName || data.witnessName || '—'}
                 {report.customerDesignation ? ` (${report.customerDesignation})` : ''}
@@ -284,7 +284,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
           </div>
 
           {/* Verified by (Engineer) */}
-          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between min-h-[155px] h-[155px]">
+          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between h-44">
             <div>
               <p className="font-bold text-slate-900 uppercase text-[11px] border-b border-slate-300 pb-1">
                 Verified By:
@@ -292,19 +292,19 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
               <p className="text-[10px] text-slate-600">CDSB Lead Engineer / Technical Lead</p>
             </div>
 
-            <div className="flex-1 flex items-center justify-center my-1.5">
+            <div className="flex-1 flex items-center justify-center my-1">
               {report.engineerSignature ? (
                 <img
                   src={report.engineerSignature}
                   alt="Verified Signature"
-                  className="max-h-16 max-w-full object-contain inline-block"
+                  className="max-h-20 max-w-full object-contain inline-block"
                 />
               ) : (
-                <span className="text-slate-400 italic text-[11px] py-2">[Pending Engineer Signature]</span>
+                <span className="text-slate-400 italic text-[11px]">[Pending Engineer Signature]</span>
               )}
             </div>
 
-            <div className="border-t border-slate-300 pt-1.5 text-[10px]">
+            <div className="border-t border-slate-300 pt-1 text-[10px]">
               <p><strong>Name:</strong> {report.engineerName || data.verifiedName || report.author?.name || 'SK Ding'}</p>
               <p>
                 <strong>Date:</strong>{' '}

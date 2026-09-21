@@ -34,6 +34,13 @@ export default function LivePdfPreview({
       setIsExporting(true);
       const element = printSheetRef.current;
 
+      interface BreakPointItem {
+        top: number;
+        bottom: number;
+        isAtomic: boolean;
+      }
+      let pageBreakItems: BreakPointItem[] = [];
+
       const canvas = await html2canvas(element, {
         scale: 2, // 2x gives 300dpi-equivalent print sharpness without memory bloat
         useCORS: true,
@@ -58,10 +65,34 @@ export default function LivePdfPreview({
             clonedZoom.style.margin = '0';
             clonedZoom.style.padding = '0';
           }
-          const clonedPrintArea = clonedDoc.querySelector('.print-area');
+          const clonedPrintArea = clonedDoc.querySelector('.print-area') as HTMLElement | null;
           if (clonedPrintArea) {
-            (clonedPrintArea as HTMLElement).style.boxShadow = 'none';
-            (clonedPrintArea as HTMLElement).style.borderRadius = '0';
+            clonedPrintArea.style.boxShadow = 'none';
+            clonedPrintArea.style.borderRadius = '0';
+
+            // Collect exact unscaled coordinates from clonedPrintArea where zoom is stripped (1:1 scale)
+            const rootRect = clonedPrintArea.getBoundingClientRect();
+            // Scale factor: canvas.width (1588) / rootRect.width (794) = 2.0
+            const canvasScale = 2;
+
+            const candidates = clonedPrintArea.querySelectorAll<HTMLElement>(
+              '.avoid-break, tr, .sheet-section, table, h1, h2, h3, .grid'
+            );
+
+            const collected: BreakPointItem[] = [];
+            candidates.forEach((el) => {
+              const r = el.getBoundingClientRect();
+              const top = Math.floor((r.top - rootRect.top) * canvasScale);
+              const bottom = Math.ceil((r.bottom - rootRect.top) * canvasScale);
+              if (top >= 0 && bottom > top) {
+                // Table rows and elements explicitly designated as .avoid-break must never be cut across
+                const isAtomic =
+                  el.classList.contains('avoid-break') || el.tagName.toLowerCase() === 'tr';
+                collected.push({ top, bottom, isAtomic });
+              }
+            });
+
+            pageBreakItems = collected;
           }
         },
       });
@@ -95,25 +126,7 @@ export default function LivePdfPreview({
           imgHeightMm
         );
       } else {
-        // Multi-page document: slice at natural element boundaries
-        const elementRect = element.getBoundingClientRect();
-        const breakPoints: number[] = [];
-
-        const breakCandidates = element.querySelectorAll<HTMLElement>(
-          '.avoid-break, table, tr, .grid, h1, h2, .sheet-section'
-        );
-
-        breakCandidates.forEach((el) => {
-          const rect = el.getBoundingClientRect();
-          const topPx = (rect.top - elementRect.top) * (canvas.height / (element.scrollHeight || 1));
-          const bottomPx = (rect.bottom - elementRect.top) * (canvas.height / (element.scrollHeight || 1));
-          if (topPx > 0) breakPoints.push(Math.floor(topPx));
-          if (bottomPx < totalCanvasHeight) breakPoints.push(Math.floor(bottomPx));
-        });
-
-        // Deduplicate and sort boundaries
-        const sortedBreaks = Array.from(new Set(breakPoints)).sort((a, b) => a - b);
-
+        // Multi-page document: slice cleanly at safe boundaries (never through table rows or avoid-break blocks)
         let currentY = 0;
         let pageIndex = 0;
 
@@ -124,15 +137,34 @@ export default function LivePdfPreview({
           if (remainingHeight <= maxPageHeightPx) {
             splitY = totalCanvasHeight;
           } else {
-            // Target split near maxPageHeightPx, but search for safe element break
             const targetY = currentY + maxPageHeightPx;
-            // Prefer cutting at a boundary between 75% and 100% of maxPageHeight
-            const minAcceptableY = currentY + maxPageHeightPx * 0.75;
-            const candidate = sortedBreaks
-              .filter((b) => b > minAcceptableY && b <= targetY)
-              .pop();
+            let effectiveTargetY = targetY;
 
-            splitY = candidate ? candidate : targetY;
+            // Step 1: Prevent cutting through any atomic block (.avoid-break or tr)
+            // If an atomic block crosses targetY, we MUST break before it starts.
+            for (const item of pageBreakItems) {
+              if (item.isAtomic && item.top < targetY && item.bottom > targetY) {
+                const blockHeight = item.bottom - item.top;
+                // Only pull back if the atomic block can fit on a standard page
+                if (blockHeight <= maxPageHeightPx && item.top > currentY) {
+                  if (item.top < effectiveTargetY) {
+                    effectiveTargetY = item.top;
+                  }
+                }
+              }
+            }
+
+            // Step 2: Pick the best break boundary <= effectiveTargetY
+            // We search for safe cut points: tops of any tr, avoid-break, section, or table
+            const safePoints = pageBreakItems
+              .map((item) => item.top)
+              .filter((top) => top > currentY && top <= effectiveTargetY);
+
+            if (safePoints.length > 0) {
+              splitY = Math.max(...safePoints);
+            } else {
+              splitY = effectiveTargetY > currentY ? effectiveTargetY : targetY;
+            }
           }
 
           const sliceHeightPx = splitY - currentY;

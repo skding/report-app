@@ -29,7 +29,7 @@ export default function MaintenanceReportSheet({
       />
 
       {/* Meta Grid Table */}
-      <table className="w-full border-collapse border border-slate-400 mb-4 text-[11px]">
+      <table className="w-full border-collapse border border-slate-400 mb-2.5 text-[11px] avoid-break">
         <tbody>
           <tr>
             <td className="w-1/6 bg-slate-100 p-2 font-bold border border-slate-400 text-slate-800">
@@ -63,36 +63,36 @@ export default function MaintenanceReportSheet({
       </table>
 
       {/* Intro Note */}
-      <div className="bg-slate-50 border border-slate-300 p-2.5 mb-4 text-[10px] text-slate-700 italic">
+      <div className="bg-slate-50 border border-slate-300 p-2 mb-2.5 text-[10px] text-slate-700 italic avoid-break">
         <strong>1. Step By Step Preventive Maintenance Procedure:</strong> The following step-by-step
         procedure has to be followed closely. The measuring results have to be noted at section 2 or attached drawings. Specific system PM checks can be inserted in section 1.7 during PM if necessary.
       </div>
 
       {/* Checklist Sections */}
       {templateSections.map((section, sIdx) => (
-        <div key={section.id || sIdx} className="mb-4 avoid-break">
-          <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider flex items-center justify-between">
+        <div key={section.id || sIdx} className="mb-2.5 sheet-section">
+          <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider flex items-center justify-between avoid-break">
             <span>
               {section.code || `1.${sIdx + 1}`} &nbsp; {section.title}
             </span>
           </div>
 
           {section.instructions && (
-            <div className="bg-slate-100 border-x border-slate-400 px-2.5 py-1 text-[10px] text-slate-600 italic">
+            <div className="bg-slate-100 border-x border-slate-400 px-2.5 py-0.5 text-[10px] text-slate-600 italic avoid-break">
               {section.instructions}
             </div>
           )}
 
           <table className="w-full border-collapse border border-slate-400 text-[10px]">
             <thead>
-              <tr className="bg-slate-200/80 text-slate-900 border-b border-slate-400">
-                <th className="p-1.5 text-left border border-slate-400 w-10">No.</th>
-                <th className="p-1.5 text-left border border-slate-400">Procedure / Test Item</th>
+              <tr className="bg-slate-200/80 text-slate-900 border-b border-slate-400 avoid-break">
+                <th className="py-1 px-1.5 text-left border border-slate-400 w-10">No.</th>
+                <th className="py-1 px-1.5 text-left border border-slate-400">Procedure / Test Item</th>
                 {section.items.some((i) => i.type === 'measurement') && (
-                  <th className="p-1.5 text-center border border-slate-400 w-28">Measured Value</th>
+                  <th className="py-1 px-1.5 text-center border border-slate-400 w-28">Measured Value</th>
                 )}
-                <th className="p-1.5 text-center border border-slate-400 w-24">Status</th>
-                <th className="p-1.5 text-left border border-slate-400 w-44">Remarks / Findings</th>
+                <th className="py-1 px-1.5 text-center border border-slate-400 w-24">Status</th>
+                <th className="py-1 px-1.5 text-left border border-slate-400 w-44">Remarks / Findings</th>
               </tr>
             </thead>
             <tbody>
@@ -102,14 +102,14 @@ export default function MaintenanceReportSheet({
                 return (
                   <tr
                     key={item.id || iIdx}
-                    className={`border-b border-slate-300 ${
+                    className={`border-b border-slate-300 avoid-break ${
                       status === 'PL' ? 'bg-amber-50/70' : iIdx % 2 === 1 ? 'bg-slate-50/50' : 'bg-white'
                     }`}
                   >
-                    <td className="p-1.5 text-center border border-slate-400 font-mono text-slate-600">
+                    <td className="py-1 px-1.5 text-center border border-slate-400 font-mono text-slate-600">
                       {String.fromCharCode(97 + (iIdx % 26))}
                     </td>
-                    <td className="p-1.5 border border-slate-400 font-medium text-slate-800">
+                    <td className="py-1 px-1.5 border border-slate-400 font-medium text-slate-800">
                       {item.text}
                       {item.spec && (
                         <span className="text-[9px] text-slate-500 block font-normal">
@@ -118,7 +118,7 @@ export default function MaintenanceReportSheet({
                       )}
                     </td>
                     {section.items.some((i) => i.type === 'measurement') && (
-                      <td className="p-1.5 text-center border border-slate-400 font-mono font-bold">
+                      <td className="py-1 px-1.5 text-center border border-slate-400 font-mono font-bold">
                         {item.type === 'measurement' ? (
                           res.value ? `${res.value} ${item.unit || 'Vdc'}` : '24.0 Vdc'
                         ) : (
@@ -126,7 +126,7 @@ export default function MaintenanceReportSheet({
                         )}
                       </td>
                     )}
-                    <td className="p-1.5 text-center border border-slate-400 font-bold">
+                    <td className="py-1 px-1.5 text-center border border-slate-400 font-bold">
                       <span
                         className={`inline-block px-2 py-0.5 rounded text-[10px] ${
                           status === 'OK'
@@ -139,7 +139,7 @@ export default function MaintenanceReportSheet({
                         {status}
                       </span>
                     </td>
-                    <td className="p-1.5 border border-slate-400 text-slate-700 text-[10px]">
+                    <td className="py-1 px-1.5 border border-slate-400 text-slate-700 text-[10px]">
                       {res.remarks || '—'}
                     </td>
                   </tr>
@@ -152,32 +152,32 @@ export default function MaintenanceReportSheet({
 
       {/* Ad-hoc Custom Checks if technician added any */}
       {data.customChecklistItems && data.customChecklistItems.length > 0 && (
-        <div className="mb-4 avoid-break">
-          <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
+        <div className="mb-2.5 sheet-section">
+          <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider avoid-break">
             1.7 System Specific Checks (On-Site Additions)
           </div>
           <table className="w-full border-collapse border border-slate-400 text-[10px]">
             <thead>
-              <tr className="bg-slate-200 text-slate-900 border-b border-slate-400">
-                <th className="p-1.5 text-left border border-slate-400 w-10">No.</th>
-                <th className="p-1.5 text-left border border-slate-400">Description</th>
-                <th className="p-1.5 text-center border border-slate-400 w-24">Status</th>
-                <th className="p-1.5 text-left border border-slate-400 w-44">Remarks</th>
+              <tr className="bg-slate-200 text-slate-900 border-b border-slate-400 avoid-break">
+                <th className="py-1 px-1.5 text-left border border-slate-400 w-10">No.</th>
+                <th className="py-1 px-1.5 text-left border border-slate-400">Description</th>
+                <th className="py-1 px-1.5 text-center border border-slate-400 w-24">Status</th>
+                <th className="py-1 px-1.5 text-left border border-slate-400 w-44">Remarks</th>
               </tr>
             </thead>
             <tbody>
               {data.customChecklistItems.map((cItem, cIdx) => (
-                <tr key={cIdx} className="border-b border-slate-300">
-                  <td className="p-1.5 text-center border border-slate-400 font-mono">
+                <tr key={cIdx} className="border-b border-slate-300 avoid-break">
+                  <td className="py-1 px-1.5 text-center border border-slate-400 font-mono">
                     {String.fromCharCode(97 + cIdx)}
                   </td>
-                  <td className="p-1.5 border border-slate-400">{cItem.text}</td>
-                  <td className="p-1.5 text-center border border-slate-400 font-bold">
+                  <td className="py-1 px-1.5 border border-slate-400">{cItem.text}</td>
+                  <td className="py-1 px-1.5 text-center border border-slate-400 font-bold">
                     <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded">
                       {cItem.status}
                     </span>
                   </td>
-                  <td className="p-1.5 border border-slate-400">{cItem.remarks || '—'}</td>
+                  <td className="py-1 px-1.5 border border-slate-400">{cItem.remarks || '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -186,11 +186,11 @@ export default function MaintenanceReportSheet({
       )}
 
       {/* Section 2: Concerns & Suggestions */}
-      <div className="mb-4 avoid-break">
+      <div className="mb-2.5 avoid-break">
         <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
           2. Concerns & Suggestions
         </div>
-        <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[90px] text-slate-800 text-justify leading-normal">
+        <div className="border border-slate-400 border-t-0 p-2.5 bg-white min-h-[60px] text-slate-800 text-justify leading-normal">
           {renderMultilineText(
             data.concernsAndSuggestions,
             'System is operating in healthy condition. Recommended to perform regular quarterly backup of SCADA runtime database and PLC controllers.'
@@ -199,7 +199,7 @@ export default function MaintenanceReportSheet({
       </div>
 
       {/* Section 3: Reporting Notice */}
-      <div className="bg-slate-50 border border-slate-300 p-2 mb-4 text-[10px] text-slate-700 italic">
+      <div className="bg-slate-50 border border-slate-300 p-2 mb-3 text-[10px] text-slate-700 italic avoid-break">
         <strong>3. Reporting Notice:</strong> Submit this document together with relevant service report to
         the client. Feedback immediately to CDSB Product Support if there are any critical failures including system, electrical and mechanical.
       </div>
@@ -252,7 +252,7 @@ export default function MaintenanceReportSheet({
       )}
 
       {/* Dual Signatures */}
-      <div className="mt-6 border-t-2 border-slate-400 pt-3 avoid-break">
+      <div className="mt-3.5 border-t-2 border-slate-400 pt-2.5 avoid-break">
         <div className="grid grid-cols-2 gap-6">
           {/* Attended By (Engineer) */}
           <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between h-44">
