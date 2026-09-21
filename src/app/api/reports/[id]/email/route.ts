@@ -93,7 +93,14 @@ export async function POST(
 
     const attachments: any[] = [];
     if (pdfBase64) {
-      const cleanBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, '');
+      let cleanBase64 = pdfBase64;
+      if (cleanBase64.includes(';base64,')) {
+        cleanBase64 = cleanBase64.split(';base64,')[1];
+      } else if (cleanBase64.includes(',')) {
+        cleanBase64 = cleanBase64.split(',')[1];
+      }
+      cleanBase64 = cleanBase64.replace(/\s/g, '');
+
       attachments.push({
         filename: `${report.reportNumber.replace(/[\/\\]/g, '_')}_${report.type}.pdf`,
         content: Buffer.from(cleanBase64, 'base64'),

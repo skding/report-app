@@ -15,7 +15,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
     : new Date(report.reportDate).toLocaleDateString('en-GB');
 
   return (
-    <div className="bg-white text-slate-900 p-6 md:p-8 font-sans max-w-[820px] mx-auto text-[11px] leading-normal shadow-lg border border-slate-200">
+    <div className="bg-white text-slate-900 p-6 font-sans w-[794px] max-w-[794px] min-w-[794px] mx-auto text-[11px] leading-normal shadow-lg border border-slate-200 box-border">
       <PrintHeader
         reportTitle="Engineer's Service Report"
         reportNumber={report.reportNumber}
@@ -23,7 +23,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
       />
 
       {/* Meta Grid Table */}
-      <table className="w-full border-collapse border border-slate-400 mb-4 text-[11px]">
+      <table className="w-full border-collapse border border-slate-400 mb-3 text-[11px] avoid-break">
         <tbody>
           <tr>
             <td className="w-1/6 bg-slate-100 p-2 font-bold border border-slate-400 text-slate-800">
@@ -78,46 +78,46 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
       </table>
 
       {/* Reported Fault */}
-      <div className="mb-4">
+      <div className="mb-3 avoid-break">
         <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
           Reported Fault / Problem Description
         </div>
-        <div className="border border-slate-400 border-t-0 p-3 bg-slate-50/50 min-h-[48px] whitespace-pre-line text-slate-800">
+        <div className="border border-slate-400 border-t-0 p-2.5 bg-slate-50/50 min-h-[32px] whitespace-pre-line text-slate-800">
           {data.reportedFault || 'No fault description provided.'}
         </div>
       </div>
 
       {/* Engineer's Report */}
-      <div className="mb-4">
+      <div className="mb-3 avoid-break">
         <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
           Engineer's Report & Findings
         </div>
-        <div className="border border-slate-400 border-t-0 p-3 bg-white min-h-[140px] whitespace-pre-line text-slate-800 text-justify">
+        <div className="border border-slate-400 border-t-0 p-2.5 bg-white min-h-[70px] whitespace-pre-line text-slate-800 text-justify leading-relaxed">
           {data.engineersReport || 'No engineer findings provided.'}
         </div>
       </div>
 
       {/* Downtime Risk & Operational Efficiency Analysis */}
       {(data.downtimeRisk?.repair || data.downtimeRisk?.replacement) && (
-        <div className="mb-4">
+        <div className="mb-3 avoid-break">
           <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
             Downtime Risk & Operational Efficiency
           </div>
           <table className="w-full border-collapse border border-slate-400 border-t-0 text-[11px]">
             <tbody>
               <tr>
-                <td className="w-1/4 bg-amber-50/80 p-2.5 font-bold border border-slate-400 text-amber-900 align-top">
+                <td className="w-1/4 bg-amber-50/80 p-2 font-bold border border-slate-400 text-amber-900 align-top">
                   Repair Option:
                 </td>
-                <td className="w-3/4 p-2.5 border border-slate-400 bg-white whitespace-pre-line">
+                <td className="w-3/4 p-2 border border-slate-400 bg-white whitespace-pre-line">
                   {data.downtimeRisk.repair || '—'}
                 </td>
               </tr>
               <tr>
-                <td className="w-1/4 bg-emerald-50/80 p-2.5 font-bold border border-slate-400 text-emerald-900 align-top">
+                <td className="w-1/4 bg-emerald-50/80 p-2 font-bold border border-slate-400 text-emerald-900 align-top">
                   Replacement Option:
                 </td>
-                <td className="w-3/4 p-2.5 border border-slate-400 bg-white whitespace-pre-line">
+                <td className="w-3/4 p-2 border border-slate-400 bg-white whitespace-pre-line">
                   {data.downtimeRisk.replacement || '—'}
                 </td>
               </tr>
@@ -128,11 +128,11 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
 
       {/* Recommendations & Spares */}
       {data.recommendations && (
-        <div className="mb-4">
+        <div className="mb-3 avoid-break">
           <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider">
             Recommendations & Action Required
           </div>
-          <div className="border border-slate-400 border-t-0 p-3 bg-white whitespace-pre-line text-slate-800">
+          <div className="border border-slate-400 border-t-0 p-2.5 bg-white whitespace-pre-line text-slate-800 leading-relaxed">
             {data.recommendations}
           </div>
         </div>
@@ -140,22 +140,42 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
 
       {/* Attached Photos */}
       {report.photos && report.photos.length > 0 && (
-        <div className="mb-4 page-break-inside-avoid">
+        <div className="mb-3 avoid-break">
           <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider mb-2">
             Site Photographic Evidence ({report.photos.length})
           </div>
-          <div className="grid grid-cols-2 gap-3 border border-slate-300 p-2 rounded">
+          <div
+            className={`grid gap-2 border border-slate-300 p-2 rounded ${
+              report.photos.length === 1
+                ? 'grid-cols-1 max-w-sm mx-auto'
+                : report.photos.length === 3
+                ? 'grid-cols-3'
+                : report.photos.length >= 5
+                ? 'grid-cols-3'
+                : 'grid-cols-2'
+            }`}
+          >
             {report.photos.map((photo, idx) => (
-              <div key={idx} className="border border-slate-200 p-1.5 bg-slate-50 flex flex-col items-center">
-                <div className="h-44 w-full flex items-center justify-center bg-white overflow-hidden border border-slate-200">
+              <div key={idx} className="border border-slate-200 p-1.5 bg-slate-50 flex flex-col items-center avoid-break">
+                <div
+                  className={`w-full flex items-center justify-center bg-white overflow-hidden border border-slate-200 ${
+                    report.photos.length === 1
+                      ? 'h-48'
+                      : report.photos.length === 3
+                      ? 'h-32'
+                      : report.photos.length >= 5
+                      ? 'h-28'
+                      : 'h-36'
+                  }`}
+                >
                   <img
                     src={photo.url}
                     alt={photo.caption || `Site Photo ${idx + 1}`}
-                    className="max-h-44 max-w-full object-contain"
+                    className="max-h-full max-w-full object-contain"
                   />
                 </div>
                 {photo.caption && (
-                  <p className="text-[10px] font-medium text-slate-700 mt-1 text-center truncate w-full">
+                  <p className="text-[10px] font-medium text-slate-700 mt-1 text-center truncate w-full" title={photo.caption}>
                     Fig {idx + 1}: {photo.caption}
                   </p>
                 )}
@@ -166,10 +186,10 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
       )}
 
       {/* Signatures Section */}
-      <div className="mt-6 border-t-2 border-slate-400 pt-3 avoid-break">
-        <div className="grid grid-cols-2 gap-6">
+      <div className="mt-4 border-t-2 border-slate-400 pt-2.5 avoid-break">
+        <div className="grid grid-cols-2 gap-4">
           {/* Attended By (Engineer) */}
-          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between h-44">
+          <div className="border border-slate-400 p-2.5 bg-slate-50/50 flex flex-col justify-between h-32">
             <div>
               <p className="font-bold text-slate-900 uppercase text-[11px] border-b border-slate-300 pb-1">
                 Attended By:
@@ -182,7 +202,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
                 <img
                   src={report.engineerSignature}
                   alt="Engineer Signature"
-                  className="max-h-20 max-w-full object-contain"
+                  className="max-h-14 max-w-full object-contain"
                 />
               ) : (
                 <span className="text-slate-400 italic text-[11px]">[Pending Signature]</span>
@@ -201,7 +221,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
           </div>
 
           {/* Customer Signature */}
-          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between h-44">
+          <div className="border border-slate-400 p-2.5 bg-slate-50/50 flex flex-col justify-between h-32">
             <div>
               <p className="font-bold text-slate-900 uppercase text-[11px] border-b border-slate-300 pb-1">
                 Verified By:
@@ -214,7 +234,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
                 <img
                   src={report.customerSignature}
                   alt="Customer Signature"
-                  className="max-h-20 max-w-full object-contain"
+                  className="max-h-14 max-w-full object-contain"
                 />
               ) : (
                 <span className="text-slate-400 italic text-[11px]">[Pending Customer Signature]</span>
@@ -238,10 +258,10 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
       </div>
 
       {/* Sheet Footer */}
-      <div className="mt-4 pt-2 text-center text-[9px] text-slate-500 border-t border-slate-200 flex items-center justify-between">
+      <div className="mt-3 pt-2 text-center text-[9px] text-slate-500 border-t border-slate-200 flex items-center justify-between avoid-break">
         <span>Clover Digital Service Management Platform</span>
         <span>Confidential Technical Assessment</span>
-        <span>Page 1 of 1</span>
+        <span>Official Document</span>
       </div>
     </div>
   );

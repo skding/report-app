@@ -35,37 +35,149 @@ export default function LivePdfPreview({
       const element = printSheetRef.current;
 
       const canvas = await html2canvas(element, {
-        scale: 2.2, // High resolution for crisp vector look
+        scale: 2, // 2x gives 300dpi-equivalent print sharpness without memory bloat
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
+        width: 794,
+        windowWidth: 794,
+        onclone: (clonedDoc) => {
+          const clonedZoom = clonedDoc.getElementById('preview-zoom-container');
+          if (clonedZoom) {
+            clonedZoom.style.transform = 'none';
+            clonedZoom.style.margin = '0';
+            clonedZoom.style.padding = '0';
+          }
+          const clonedPrintArea = clonedDoc.querySelector('.print-area');
+          if (clonedPrintArea) {
+            (clonedPrintArea as HTMLElement).style.boxShadow = 'none';
+            (clonedPrintArea as HTMLElement).style.borderRadius = '0';
+          }
+        },
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth - 16; // 8mm margin on left and right
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
+      const margin = 6; // 6mm margin for clean printable boundary
+      const printableWidthMm = pdfWidth - 2 * margin; // 198mm
+      const printableHeightMm = pdfHeight - 2 * margin; // 285mm
 
-      let heightLeft = imgHeight;
-      let position = 8; // Top margin
+      // Canvas scale ratio
+      const pxPerMm = canvas.width / printableWidthMm;
+      const maxPageHeightPx = Math.floor(printableHeightMm * pxPerMm);
+      const totalCanvasHeight = canvas.height;
 
-      // First page
-      pdf.addImage(imgData, 'JPEG', 8, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight - 16;
+      // If document fits on a single A4 page
+      if (totalCanvasHeight <= maxPageHeightPx) {
+        const imgHeightMm = (totalCanvasHeight * printableWidthMm) / canvas.width;
+        pdf.addImage(
+          canvas.toDataURL('image/jpeg', 0.98),
+          'JPEG',
+          margin,
+          margin,
+          printableWidthMm,
+          imgHeightMm
+        );
+      } else {
+        // Multi-page document: slice at natural element boundaries
+        const elementRect = element.getBoundingClientRect();
+        const breakPoints: number[] = [];
 
-      // Handle multi-page if content overflows
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + 8;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 8, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight - 16;
+        const breakCandidates = element.querySelectorAll<HTMLElement>(
+          '.avoid-break, table, tr, .grid, h1, h2, .sheet-section'
+        );
+
+        breakCandidates.forEach((el) => {
+          const rect = el.getBoundingClientRect();
+          const topPx = (rect.top - elementRect.top) * (canvas.height / (element.scrollHeight || 1));
+          const bottomPx = (rect.bottom - elementRect.top) * (canvas.height / (element.scrollHeight || 1));
+          if (topPx > 0) breakPoints.push(Math.floor(topPx));
+          if (bottomPx < totalCanvasHeight) breakPoints.push(Math.floor(bottomPx));
+        });
+
+        // Deduplicate and sort boundaries
+        const sortedBreaks = Array.from(new Set(breakPoints)).sort((a, b) => a - b);
+
+        let currentY = 0;
+        let pageIndex = 0;
+
+        while (currentY < totalCanvasHeight) {
+          const remainingHeight = totalCanvasHeight - currentY;
+          let splitY: number;
+
+          if (remainingHeight <= maxPageHeightPx) {
+            splitY = totalCanvasHeight;
+          } else {
+            // Target split near maxPageHeightPx, but search for safe element break
+            const targetY = currentY + maxPageHeightPx;
+            // Prefer cutting at a boundary between 75% and 100% of maxPageHeight
+            const minAcceptableY = currentY + maxPageHeightPx * 0.75;
+            const candidate = sortedBreaks
+              .filter((b) => b > minAcceptableY && b <= targetY)
+              .pop();
+
+            splitY = candidate ? candidate : targetY;
+          }
+
+          const sliceHeightPx = splitY - currentY;
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sliceHeightPx;
+          const ctx = pageCanvas.getContext('2d');
+
+          if (ctx) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, sliceHeightPx);
+            ctx.drawImage(
+              canvas,
+              0,
+              currentY,
+              canvas.width,
+              sliceHeightPx,
+              0,
+              0,
+              canvas.width,
+              sliceHeightPx
+            );
+          }
+
+          if (pageIndex > 0) {
+            pdf.addPage();
+          }
+
+          const sliceHeightMm = (sliceHeightPx * printableWidthMm) / canvas.width;
+          pdf.addImage(
+            pageCanvas.toDataURL('image/jpeg', 0.98),
+            'JPEG',
+            margin,
+            margin,
+            printableWidthMm,
+            sliceHeightMm
+          );
+
+          currentY = splitY;
+          pageIndex++;
+        }
+
+        // Add dynamic page numbers on multi-page documents
+        const totalPages = pdf.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+          pdf.setPage(i);
+          pdf.setFontSize(8);
+          pdf.setTextColor(100, 116, 139); // slate-500
+          pdf.text(
+            `Page ${i} of ${totalPages}`,
+            pdfWidth - margin - 4,
+            pdfHeight - (margin / 2) + 0.5,
+            { align: 'right' }
+          );
+        }
       }
 
       const base64 = pdf.output('datauristring');
@@ -179,6 +291,7 @@ export default function LivePdfPreview({
       {/* Sheet Preview Scroll Container */}
       <div className="flex-1 overflow-auto p-4 md:p-6 flex justify-center bg-slate-900/60 custom-scrollbar">
         <div
+          id="preview-zoom-container"
           style={{
             transform: `scale(${zoomLevel})`,
             transformOrigin: 'top center',

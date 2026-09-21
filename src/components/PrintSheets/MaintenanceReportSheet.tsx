@@ -20,7 +20,7 @@ export default function MaintenanceReportSheet({
     : new Date(report.reportDate).toLocaleDateString('en-GB');
 
   return (
-    <div className="bg-white text-slate-900 p-6 md:p-8 font-sans max-w-[820px] mx-auto text-[11px] leading-normal shadow-lg border border-slate-200">
+    <div className="bg-white text-slate-900 p-6 font-sans w-[794px] max-w-[794px] min-w-[794px] mx-auto text-[11px] leading-normal shadow-lg border border-slate-200 box-border">
       <PrintHeader
         reportTitle="Preventive Maintenance Report"
         reportNumber={report.reportNumber}
@@ -301,10 +301,10 @@ export default function MaintenanceReportSheet({
       </div>
 
       {/* Sheet Footer */}
-      <div className="mt-4 pt-2 text-center text-[9px] text-slate-500 border-t border-slate-200 flex items-center justify-between">
+      <div className="mt-3 pt-2 text-center text-[9px] text-slate-500 border-t border-slate-200 flex items-center justify-between avoid-break">
         <span>Clover Digital Sdn Bhd</span>
         <span>End of Preventive Maintenance Document</span>
-        <span>Page 1 of 1</span>
+        <span>Official Document</span>
       </div>
     </div>
   );

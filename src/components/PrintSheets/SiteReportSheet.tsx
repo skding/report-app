@@ -30,7 +30,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
   const totalHours = (report.normalHours || 0) + (report.otHours || 0);
 
   return (
-    <div className="bg-white text-slate-900 p-6 md:p-8 font-sans max-w-[820px] mx-auto text-[11px] leading-normal shadow-lg border border-slate-200">
+    <div className="bg-white text-slate-900 p-6 font-sans w-[794px] max-w-[794px] min-w-[794px] mx-auto text-[11px] leading-normal shadow-lg border border-slate-200 box-border">
       <PrintHeader
         reportTitle="Daily Site / Remote Technical Support Report"
         reportNumber={report.reportNumber}
@@ -194,22 +194,42 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
 
       {/* Attached Photos */}
       {report.photos && report.photos.length > 0 && (
-        <div className="mb-4 page-break-inside-avoid">
+        <div className="mb-3 avoid-break">
           <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider mb-2">
             Site Photos & Engineering Work Evidence ({report.photos.length})
           </div>
-          <div className="grid grid-cols-2 gap-3 border border-slate-300 p-2 rounded">
+          <div
+            className={`grid gap-2 border border-slate-300 p-2 rounded ${
+              report.photos.length === 1
+                ? 'grid-cols-1 max-w-sm mx-auto'
+                : report.photos.length === 3
+                ? 'grid-cols-3'
+                : report.photos.length >= 5
+                ? 'grid-cols-3'
+                : 'grid-cols-2'
+            }`}
+          >
             {report.photos.map((photo, idx) => (
-              <div key={idx} className="border border-slate-200 p-1.5 bg-slate-50 flex flex-col items-center">
-                <div className="h-44 w-full flex items-center justify-center bg-white overflow-hidden border border-slate-200">
+              <div key={idx} className="border border-slate-200 p-1.5 bg-slate-50 flex flex-col items-center avoid-break">
+                <div
+                  className={`w-full flex items-center justify-center bg-white overflow-hidden border border-slate-200 ${
+                    report.photos.length === 1
+                      ? 'h-48'
+                      : report.photos.length === 3
+                      ? 'h-32'
+                      : report.photos.length >= 5
+                      ? 'h-28'
+                      : 'h-36'
+                  }`}
+                >
                   <img
                     src={photo.url}
                     alt={photo.caption || `Site Photo ${idx + 1}`}
-                    className="max-h-44 max-w-full object-contain"
+                    className="max-h-full max-w-full object-contain"
                   />
                 </div>
                 {photo.caption && (
-                  <p className="text-[10px] font-medium text-slate-700 mt-1 text-center truncate w-full">
+                  <p className="text-[10px] font-medium text-slate-700 mt-1 text-center truncate w-full" title={photo.caption}>
                     Fig {idx + 1}: {photo.caption}
                   </p>
                 )}
@@ -220,13 +240,13 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
       )}
 
       {/* Acceptance / Verification Dual Signatures */}
-      <div className="mt-6 border-t-2 border-slate-400 pt-3 avoid-break">
+      <div className="mt-4 border-t-2 border-slate-400 pt-2.5 avoid-break">
         <div className="mb-2 font-bold text-xs uppercase tracking-wider text-slate-900">
           Acceptance / Verification
         </div>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-2 gap-4">
           {/* Witness by */}
-          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between h-44">
+          <div className="border border-slate-400 p-2.5 bg-slate-50/50 flex flex-col justify-between h-32">
             <div>
               <p className="font-bold text-slate-900 uppercase text-[11px] border-b border-slate-300 pb-1">
                 Witnessed By:
@@ -239,7 +259,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
                 <img
                   src={report.customerSignature}
                   alt="Witness Signature"
-                  className="max-h-20 max-w-full object-contain"
+                  className="max-h-14 max-w-full object-contain"
                 />
               ) : (
                 <span className="text-slate-400 italic text-[11px]">[Pending Witness Signature]</span>
@@ -261,7 +281,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
           </div>
 
           {/* Verified by (Engineer) */}
-          <div className="border border-slate-400 p-3 bg-slate-50/50 flex flex-col justify-between h-44">
+          <div className="border border-slate-400 p-2.5 bg-slate-50/50 flex flex-col justify-between h-32">
             <div>
               <p className="font-bold text-slate-900 uppercase text-[11px] border-b border-slate-300 pb-1">
                 Verified By:
@@ -274,7 +294,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
                 <img
                   src={report.engineerSignature}
                   alt="Verified Signature"
-                  className="max-h-20 max-w-full object-contain"
+                  className="max-h-14 max-w-full object-contain"
                 />
               ) : (
                 <span className="text-slate-400 italic text-[11px]">[Pending Engineer Signature]</span>
@@ -295,10 +315,10 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
       </div>
 
       {/* Sheet Footer */}
-      <div className="mt-4 pt-2 text-center text-[9px] text-slate-500 border-t border-slate-200 flex items-center justify-between">
+      <div className="mt-3 pt-2 text-center text-[9px] text-slate-500 border-t border-slate-200 flex items-center justify-between avoid-break">
         <span>Clover Digital Site Automation Platform</span>
         <span>Site Activity Record</span>
-        <span>Page 1 of 1</span>
+        <span>Official Document</span>
       </div>
     </div>
   );
