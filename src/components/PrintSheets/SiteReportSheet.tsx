@@ -3,7 +3,7 @@
 import React from 'react';
 import PrintHeader from './PrintHeader';
 import { FullReport, SiteReportData } from '@/lib/types';
-import { renderMultilineText } from './printUtils';
+import { renderMultilineText, formatPrintDate } from './printUtils';
 
 interface SiteReportSheetProps {
   report: FullReport;
@@ -14,16 +14,14 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
   const days = data.days && data.days.length > 0 ? data.days : null;
   const isMultiDay = Boolean(days && days.length > 1);
 
-  let attendanceFormatted = report.attendanceDate
-    ? new Date(report.attendanceDate).toLocaleDateString('en-GB')
-    : new Date(report.reportDate).toLocaleDateString('en-GB');
+  let attendanceFormatted = formatPrintDate(report.attendanceDate || report.reportDate);
 
   if (isMultiDay && days) {
     const firstDate = days[0]?.date
-      ? new Date(days[0].date).toLocaleDateString('en-GB')
+      ? formatPrintDate(days[0].date)
       : '';
     const lastDate = days[days.length - 1]?.date
-      ? new Date(days[days.length - 1].date).toLocaleDateString('en-GB')
+      ? formatPrintDate(days[days.length - 1].date)
       : '';
     attendanceFormatted = `${firstDate} - ${lastDate} (${days.length} Days)`;
   }
@@ -277,7 +275,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
               <p>
                 <strong>Date:</strong>{' '}
                 {report.customerSignedAt
-                  ? new Date(report.customerSignedAt).toLocaleDateString('en-GB')
+                  ? formatPrintDate(report.customerSignedAt)
                   : attendanceFormatted}
               </p>
             </div>
@@ -309,7 +307,7 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
               <p>
                 <strong>Date:</strong>{' '}
                 {report.engineerSignedAt
-                  ? new Date(report.engineerSignedAt).toLocaleDateString('en-GB')
+                  ? formatPrintDate(report.engineerSignedAt)
                   : attendanceFormatted}
               </p>
             </div>

@@ -17,3 +17,29 @@ export function renderMultilineText(text?: string | null, fallback = '—'): Rea
     </React.Fragment>
   ));
 }
+
+/**
+ * Formats a date string or Date object cleanly as DD/MM/YYYY without timezone shift issues.
+ */
+export function formatPrintDate(dateVal?: string | Date | null, fallback = '—'): string {
+  if (!dateVal) return fallback;
+  if (typeof dateVal === 'string') {
+    const trimmed = dateVal.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const [y, m, d] = trimmed.split('-');
+      return `${d}/${m}/${y}`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
+      const datePart = trimmed.split('T')[0];
+      const [y, m, d] = datePart.split('-');
+      return `${d}/${m}/${y}`;
+    }
+  }
+  try {
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return fallback;
+    return d.toLocaleDateString('en-GB');
+  } catch {
+    return fallback;
+  }
+}

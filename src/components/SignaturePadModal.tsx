@@ -6,10 +6,11 @@ import { X, RotateCcw, Check, PenTool, Sparkles } from 'lucide-react';
 interface SignaturePadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { signatureData: string; name: string; designation?: string }) => void;
+  onSave: (data: { signatureData: string; name: string; designation?: string; signedDate?: string }) => void;
   title: string;
   initialName?: string;
   initialDesignation?: string;
+  initialDate?: string;
   savedSignature?: string | null;
   requireDesignation?: boolean;
 }
@@ -21,6 +22,7 @@ export default function SignaturePadModal({
   title,
   initialName = '',
   initialDesignation = '',
+  initialDate = '',
   savedSignature,
   requireDesignation = false,
 }: SignaturePadModalProps) {
@@ -29,17 +31,19 @@ export default function SignaturePadModal({
   const [hasDrawn, setHasDrawn] = useState(false);
   const [name, setName] = useState(initialName);
   const [designation, setDesignation] = useState(initialDesignation);
+  const [signedDate, setSignedDate] = useState(initialDate);
   const [activeTab, setActiveTab] = useState<'draw' | 'saved'>(savedSignature ? 'saved' : 'draw');
 
   useEffect(() => {
     setName(initialName);
     setDesignation(initialDesignation);
+    setSignedDate(initialDate);
     if (savedSignature) {
       setActiveTab('saved');
     } else {
       setActiveTab('draw');
     }
-  }, [initialName, initialDesignation, savedSignature, isOpen]);
+  }, [initialName, initialDesignation, initialDate, savedSignature, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -139,6 +143,7 @@ export default function SignaturePadModal({
       signatureData: finalSig,
       name: name.trim(),
       designation: designation.trim() || undefined,
+      signedDate: signedDate || undefined,
     });
     onClose();
   };
@@ -167,7 +172,7 @@ export default function SignaturePadModal({
 
         <div className="p-6 space-y-4">
           {/* Signer Details */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">
                 Signer Name <span className="text-red-400">*</span>
@@ -189,6 +194,17 @@ export default function SignaturePadModal({
                 value={designation}
                 onChange={(e) => setDesignation(e.target.value)}
                 placeholder="e.g. Facility Engineer / Client Rep"
+                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                Signing Date
+              </label>
+              <input
+                type="date"
+                value={signedDate}
+                onChange={(e) => setSignedDate(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500"
               />
             </div>

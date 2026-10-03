@@ -3,7 +3,7 @@
 import React from 'react';
 import PrintHeader from './PrintHeader';
 import { FullReport, ServiceReportData } from '@/lib/types';
-import { renderMultilineText } from './printUtils';
+import { renderMultilineText, formatPrintDate } from './printUtils';
 
 interface ServiceReportSheetProps {
   report: FullReport;
@@ -11,9 +11,7 @@ interface ServiceReportSheetProps {
 
 export default function ServiceReportSheet({ report }: ServiceReportSheetProps) {
   const data = (report.data || {}) as ServiceReportData;
-  const attendanceFormatted = report.attendanceDate
-    ? new Date(report.attendanceDate).toLocaleDateString('en-GB')
-    : new Date(report.reportDate).toLocaleDateString('en-GB');
+  const attendanceFormatted = formatPrintDate(report.attendanceDate || report.reportDate);
 
   return (
     <div className="bg-white text-slate-900 p-6 font-sans w-[794px] max-w-[794px] min-w-[794px] mx-auto text-[11px] leading-normal shadow-lg border border-slate-200 box-border">
@@ -215,7 +213,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
               <p>
                 <strong>Date:</strong>{' '}
                 {report.engineerSignedAt
-                  ? new Date(report.engineerSignedAt).toLocaleDateString('en-GB')
+                  ? formatPrintDate(report.engineerSignedAt)
                   : attendanceFormatted}
               </p>
             </div>
@@ -250,7 +248,7 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
               <p>
                 <strong>Date:</strong>{' '}
                 {report.customerSignedAt
-                  ? new Date(report.customerSignedAt).toLocaleDateString('en-GB')
+                  ? formatPrintDate(report.customerSignedAt)
                   : attendanceFormatted}
               </p>
             </div>

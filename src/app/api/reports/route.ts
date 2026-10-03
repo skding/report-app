@@ -118,9 +118,11 @@ export async function POST(req: Request) {
       photos,
       engineerName,
       engineerSignature,
+      engineerSignedAt,
       customerName,
       customerDesignation,
       customerSignature,
+      customerSignedAt,
       status,
     } = body;
 
@@ -129,6 +131,8 @@ export async function POST(req: Request) {
     }
 
     const reportNumber = await generateReportNumber(type);
+    const parsedAttendanceDate = attendanceDate ? new Date(attendanceDate) : (reportDate ? new Date(reportDate) : new Date());
+    const parsedReportDate = reportDate ? new Date(reportDate) : parsedAttendanceDate;
 
     const report = await prisma.report.create({
       data: {
@@ -140,8 +144,8 @@ export async function POST(req: Request) {
         authorId: user.id,
         title: title || `${type === 'SERVICE' ? 'Service' : type === 'SITE_WORK' ? 'Site Work' : 'Maintenance'} Report`,
         projectCode,
-        reportDate: reportDate ? new Date(reportDate) : (attendanceDate ? new Date(attendanceDate) : new Date()),
-        attendanceDate: attendanceDate ? new Date(attendanceDate) : (reportDate ? new Date(reportDate) : new Date()),
+        reportDate: parsedReportDate,
+        attendanceDate: parsedAttendanceDate,
         startTime,
         endTime,
         normalHours: normalHours ? parseFloat(normalHours) : null,
@@ -149,11 +153,19 @@ export async function POST(req: Request) {
         data: data || {},
         engineerName: engineerName || user.name,
         engineerSignature: engineerSignature || user.signatureData || null,
-        engineerSignedAt: engineerSignature ? new Date() : null,
+        engineerSignedAt: engineerSignedAt
+          ? new Date(engineerSignedAt)
+          : (engineerSignature || user.signatureData)
+          ? parsedAttendanceDate
+          : null,
         customerName,
         customerDesignation,
         customerSignature,
-        customerSignedAt: customerSignature ? new Date() : null,
+        customerSignedAt: customerSignedAt
+          ? new Date(customerSignedAt)
+          : customerSignature
+          ? parsedAttendanceDate
+          : null,
         photos: photos && photos.length > 0 ? {
           create: photos.map((p: any) => ({
             url: p.url,

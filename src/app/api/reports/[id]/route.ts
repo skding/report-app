@@ -67,9 +67,11 @@ export async function PUT(
       photos,
       engineerName,
       engineerSignature,
+      engineerSignedAt,
       customerName,
       customerDesignation,
       customerSignature,
+      customerSignedAt,
       status,
     } = body;
 
@@ -100,17 +102,29 @@ export async function PUT(
       customerDesignation: customerDesignation !== undefined ? customerDesignation : existingReport.customerDesignation,
     };
 
-    if (engineerSignature && engineerSignature !== existingReport.engineerSignature) {
-      updateData.engineerSignature = engineerSignature;
-      updateData.engineerSignedAt = new Date();
+    if (engineerSignature !== undefined) {
+      updateData.engineerSignature = engineerSignature || null;
     }
 
-    if (customerSignature && customerSignature !== existingReport.customerSignature) {
-      updateData.customerSignature = customerSignature;
-      updateData.customerSignedAt = new Date();
-      if (!status) {
+    if (engineerSignedAt !== undefined) {
+      updateData.engineerSignedAt = engineerSignedAt ? new Date(engineerSignedAt) : null;
+    } else if (engineerSignature && engineerSignature !== existingReport.engineerSignature) {
+      const defaultDate = attendanceDate || existingReport.attendanceDate || reportDate || existingReport.reportDate;
+      updateData.engineerSignedAt = defaultDate ? new Date(defaultDate) : new Date();
+    }
+
+    if (customerSignature !== undefined) {
+      updateData.customerSignature = customerSignature || null;
+      if (customerSignature && !status && existingReport.status === 'DRAFT') {
         updateData.status = 'COMPLETED';
       }
+    }
+
+    if (customerSignedAt !== undefined) {
+      updateData.customerSignedAt = customerSignedAt ? new Date(customerSignedAt) : null;
+    } else if (customerSignature && customerSignature !== existingReport.customerSignature) {
+      const defaultDate = attendanceDate || existingReport.attendanceDate || reportDate || existingReport.reportDate;
+      updateData.customerSignedAt = defaultDate ? new Date(defaultDate) : new Date();
     }
 
     // Update photos if provided

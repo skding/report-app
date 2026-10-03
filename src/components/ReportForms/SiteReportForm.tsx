@@ -35,10 +35,16 @@ export default function SiteReportForm({
 
   const formatDateForInput = (dateStr?: string | null) => {
     if (!dateStr) return '';
+    if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      return dateStr.substring(0, 10);
+    }
     try {
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return '';
-      return d.toISOString().split('T')[0];
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     } catch {
       return '';
     }
@@ -161,21 +167,28 @@ export default function SiteReportForm({
     signatureData: string;
     name: string;
     designation?: string;
+    signedDate?: string;
   }) => {
     if (sigModalType === 'verified') {
+      const signedAt = sigResult.signedDate
+        ? new Date(sigResult.signedDate).toISOString()
+        : (report.engineerSignedAt || report.attendanceDate || report.reportDate || new Date().toISOString());
       onChange({
         ...report,
         engineerName: sigResult.name,
         engineerSignature: sigResult.signatureData,
-        engineerSignedAt: new Date().toISOString(),
+        engineerSignedAt: signedAt,
       });
     } else if (sigModalType === 'witness') {
+      const signedAt = sigResult.signedDate
+        ? new Date(sigResult.signedDate).toISOString()
+        : (report.customerSignedAt || report.attendanceDate || report.reportDate || new Date().toISOString());
       onChange({
         ...report,
         customerName: sigResult.name,
         customerDesignation: sigResult.designation || '',
         customerSignature: sigResult.signatureData,
-        customerSignedAt: new Date().toISOString(),
+        customerSignedAt: signedAt,
         status: report.status === 'DRAFT' ? 'COMPLETED' : report.status,
       });
     }
@@ -484,6 +497,43 @@ export default function SiteReportForm({
                 </button>
               )}
             </div>
+
+            {/* Witness Date Input */}
+            <div className="pt-2 border-t border-slate-800/80">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-medium text-slate-400">
+                  Witness Date
+                </label>
+                {!disabled && report.attendanceDate && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange({
+                        ...report,
+                        customerSignedAt: report.attendanceDate,
+                      });
+                    }}
+                    title="Follow Report Attendance Date"
+                    className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    Follow Attendance Date
+                  </button>
+                )}
+              </div>
+              <input
+                type="date"
+                disabled={disabled}
+                value={formatDateForInput(report.customerSignedAt || report.attendanceDate || report.reportDate)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onChange({
+                    ...report,
+                    customerSignedAt: val ? new Date(val).toISOString() : null,
+                  });
+                }}
+                className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+              />
+            </div>
           </div>
 
           {/* Verified By (Engineer) */}
@@ -525,6 +575,43 @@ export default function SiteReportForm({
                 </button>
               )}
             </div>
+
+            {/* Verified Date Input */}
+            <div className="pt-2 border-t border-slate-800/80">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-medium text-slate-400">
+                  Verified Date
+                </label>
+                {!disabled && report.attendanceDate && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange({
+                        ...report,
+                        engineerSignedAt: report.attendanceDate,
+                      });
+                    }}
+                    title="Follow Report Attendance Date"
+                    className="text-[10px] text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    Follow Attendance Date
+                  </button>
+                )}
+              </div>
+              <input
+                type="date"
+                disabled={disabled}
+                value={formatDateForInput(report.engineerSignedAt || report.attendanceDate || report.reportDate)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onChange({
+                    ...report,
+                    engineerSignedAt: val ? new Date(val).toISOString() : null,
+                  });
+                }}
+                className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -550,6 +637,11 @@ export default function SiteReportForm({
               ? 'Lead Engineer'
               : report.customerDesignation || 'Site Lead'
           }
+          initialDate={formatDateForInput(
+            sigModalType === 'verified'
+              ? report.engineerSignedAt || report.attendanceDate || report.reportDate
+              : report.customerSignedAt || report.attendanceDate || report.reportDate
+          )}
           savedSignature={
             sigModalType === 'verified' ? currentUser?.signatureData : null
           }

@@ -3,7 +3,7 @@
 import React from 'react';
 import PrintHeader from './PrintHeader';
 import { FullReport, MaintenanceReportData, ChecklistSection } from '@/lib/types';
-import { renderMultilineText } from './printUtils';
+import { renderMultilineText, formatPrintDate } from './printUtils';
 
 interface MaintenanceReportSheetProps {
   report: FullReport;
@@ -16,9 +16,7 @@ export default function MaintenanceReportSheet({
 }: MaintenanceReportSheetProps) {
   const data = (report.data || {}) as MaintenanceReportData;
   const responses = data.checklistResponses || {};
-  const attendanceFormatted = report.attendanceDate
-    ? new Date(report.attendanceDate).toLocaleDateString('en-GB')
-    : new Date(report.reportDate).toLocaleDateString('en-GB');
+  const attendanceFormatted = formatPrintDate(report.attendanceDate || report.reportDate);
 
   return (
     <div className="bg-white text-slate-900 p-6 font-sans w-[794px] max-w-[794px] min-w-[794px] mx-auto text-[11px] leading-normal shadow-lg border border-slate-200 box-border">
@@ -280,7 +278,7 @@ export default function MaintenanceReportSheet({
               <p>
                 <strong>Date:</strong>{' '}
                 {report.engineerSignedAt
-                  ? new Date(report.engineerSignedAt).toLocaleDateString('en-GB')
+                  ? formatPrintDate(report.engineerSignedAt)
                   : attendanceFormatted}
               </p>
             </div>
@@ -315,7 +313,7 @@ export default function MaintenanceReportSheet({
               <p>
                 <strong>Date:</strong>{' '}
                 {report.customerSignedAt
-                  ? new Date(report.customerSignedAt).toLocaleDateString('en-GB')
+                  ? formatPrintDate(report.customerSignedAt)
                   : attendanceFormatted}
               </p>
             </div>
