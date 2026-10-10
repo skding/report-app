@@ -12,6 +12,7 @@ import {
   Plus,
   Trash2,
   Layers,
+  Camera,
 } from 'lucide-react';
 import { FullReport, SiteReportData, SiteDayActivity, UserSession } from '@/lib/types';
 import PhotoUploader from '../PhotoUploader';
@@ -301,6 +302,20 @@ export default function SiteReportForm({
                   <span className="text-[11px] text-slate-500">
                     ({(Number(day.normalHours) || 0) + (Number(day.otHours) || 0)}h)
                   </span>
+                  {(() => {
+                    const dayPhotosCount = (report.photos || []).filter((p) => {
+                      if (p.sectionKey === `day-${idx + 1}`) return true;
+                      if (p.date && day.date && p.date.split('T')[0] === day.date.split('T')[0]) return true;
+                      if (p.sectionKey && day.date && p.sectionKey.split('T')[0] === day.date.split('T')[0]) return true;
+                      return false;
+                    }).length;
+                    return dayPhotosCount > 0 ? (
+                      <span className="px-2 py-0.5 rounded-full bg-teal-950/80 text-teal-300 font-mono text-[10px] border border-teal-800 flex items-center gap-1">
+                        <Camera className="w-3 h-3 text-teal-400" />
+                        {dayPhotosCount} {dayPhotosCount === 1 ? 'Photo' : 'Photos'}
+                      </span>
+                    ) : null;
+                  })()}
                 </div>
 
                 {!disabled && days.length > 1 && (
@@ -442,11 +457,18 @@ export default function SiteReportForm({
       </div>
 
       {/* Photo Attachments */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4" id="site-report-photos">
         <PhotoUploader
           photos={report.photos || []}
           onChange={(newPhotos) => onChange({ ...report, photos: newPhotos })}
           disabled={disabled}
+          availableDates={days.map((d, i) => ({
+            date: d.date,
+            label: `${formatDateForInput(d.date) || 'Day ' + (i + 1)}`,
+            dayNumber: i + 1,
+          }))}
+          defaultDate={days[0]?.date || report.attendanceDate || report.reportDate}
+          title="Site Photos & Evidence (Multi-Day)"
         />
       </div>
 

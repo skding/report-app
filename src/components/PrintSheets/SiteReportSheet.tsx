@@ -2,7 +2,7 @@
 
 import React from 'react';
 import PrintHeader from './PrintHeader';
-import { FullReport, SiteReportData } from '@/lib/types';
+import { FullReport, SiteReportData, SiteDayActivity, ReportPhotoItem } from '@/lib/types';
 import { renderMultilineText, formatPrintDate } from './printUtils';
 
 interface SiteReportSheetProps {
@@ -27,6 +27,121 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
   }
 
   const totalHours = (report.normalHours || 0) + (report.otHours || 0);
+
+  // Photos processing & multi-day grouping
+  interface PhotoWithMeta extends ReportPhotoItem {
+    overallIndex: number;
+    displayDate: string;
+    dayBadge?: string;
+  }
+
+  interface PhotoGroup {
+    key: string;
+    dayNumber?: number;
+    title: string;
+    dateStr: string;
+    displayDate: string;
+    dayDescription?: string;
+    photos: PhotoWithMeta[];
+  }
+
+  const cleanDateStr = (val?: string | null): string => {
+    if (!val) return '';
+    return val.split('T')[0];
+  };
+
+  const isPhotoMatchingDay = (photo: ReportPhotoItem, day: SiteDayActivity, dayIdx: number): boolean => {
+    const pDate = cleanDateStr(photo.date || photo.sectionKey);
+    const dDate = cleanDateStr(day.date);
+    if (pDate && dDate && pDate === dDate) return true;
+    if (
+      photo.sectionKey &&
+      (photo.sectionKey === `day-${dayIdx + 1}` ||
+        photo.sectionKey === `day-${day.dayNumber}` ||
+        photo.sectionKey === day.id)
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const photoGroups: PhotoGroup[] = [];
+  const rawPhotos = report.photos || [];
+
+  if (rawPhotos.length > 0) {
+    if (isMultiDay && days && days.length > 1) {
+      const assignedIndices = new Set<number>();
+
+      days.forEach((day, idx) => {
+        const dayNumber = day.dayNumber || idx + 1;
+        const matchingPhotos: PhotoWithMeta[] = [];
+
+        rawPhotos.forEach((photo, pIdx) => {
+          if (isPhotoMatchingDay(photo, day, idx)) {
+            assignedIndices.add(pIdx);
+            matchingPhotos.push({
+              ...photo,
+              overallIndex: pIdx,
+              displayDate: formatPrintDate(photo.date || day.date),
+              dayBadge: `Day ${dayNumber}`,
+            });
+          }
+        });
+
+        if (matchingPhotos.length > 0) {
+          const firstLine = day.workDescription ? day.workDescription.split(/\r?\n/)[0].trim() : '';
+          photoGroups.push({
+            key: `day-${dayNumber}`,
+            dayNumber,
+            title: `DAY ${dayNumber} — ${formatPrintDate(day.date)}`,
+            dateStr: day.date,
+            displayDate: formatPrintDate(day.date),
+            dayDescription: firstLine ? (firstLine.length > 60 ? firstLine.substring(0, 58) + '...' : firstLine) : undefined,
+            photos: matchingPhotos,
+          });
+        }
+      });
+
+      const unassignedPhotos: PhotoWithMeta[] = [];
+      rawPhotos.forEach((photo, pIdx) => {
+        if (!assignedIndices.has(pIdx)) {
+          unassignedPhotos.push({
+            ...photo,
+            overallIndex: pIdx,
+            displayDate: formatPrintDate(photo.date || report.attendanceDate || report.reportDate),
+            dayBadge: 'General',
+          });
+        }
+      });
+
+      if (unassignedPhotos.length > 0) {
+        photoGroups.push({
+          key: 'unassigned',
+          title: 'General Site Evidence & Documentation',
+          dateStr: report.attendanceDate || report.reportDate || '',
+          displayDate: formatPrintDate(report.attendanceDate || report.reportDate),
+          photos: unassignedPhotos,
+        });
+      }
+    } else {
+      const defaultDateFormatted = formatPrintDate(days?.[0]?.date || report.attendanceDate || report.reportDate);
+      const unifiedPhotos: PhotoWithMeta[] = rawPhotos.map((photo, pIdx) => ({
+        ...photo,
+        overallIndex: pIdx,
+        displayDate: formatPrintDate(photo.date || days?.[0]?.date || report.attendanceDate || report.reportDate),
+        dayBadge: days && days.length === 1 ? 'Day 1' : undefined,
+      }));
+
+      photoGroups.push({
+        key: 'single-day',
+        dayNumber: days && days.length === 1 ? 1 : undefined,
+        title: days && days.length === 1 ? `DAY 1 — ${defaultDateFormatted}` : 'Site Work Evidence',
+        dateStr: days?.[0]?.date || report.attendanceDate || report.reportDate || '',
+        displayDate: defaultDateFormatted,
+        photos: unifiedPhotos,
+      });
+    }
+  }
 
   return (
     <div className="bg-white text-slate-900 p-6 font-sans w-[794px] max-w-[794px] min-w-[794px] mx-auto text-[11px] leading-normal shadow-lg border border-slate-200 box-border">
@@ -152,10 +267,20 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
                           })}`
                         : ''}
                     </span>
-                    <span className="text-slate-600 font-mono text-[9px]">
-                      {day.startTime && day.endTime ? `${day.startTime} - ${day.endTime} | ` : ''}
-                      Normal: {day.normalHours ?? 8}h | OT: {day.otHours ?? 0}h
-                    </span>
+                    <div className="flex items-center gap-2.5">
+                      {(() => {
+                        const count = (report.photos || []).filter((p) => isPhotoMatchingDay(p, day, idx)).length;
+                        return count > 0 ? (
+                          <span className="text-teal-800 font-mono text-[9px] bg-teal-50 px-1.5 py-0.5 rounded border border-teal-300 font-medium">
+                            📷 {count} {count === 1 ? 'Photo' : 'Photos'}
+                          </span>
+                        ) : null;
+                      })()}
+                      <span className="text-slate-600 font-mono text-[9px]">
+                        {day.startTime && day.endTime ? `${day.startTime} - ${day.endTime} | ` : ''}
+                        Normal: {day.normalHours ?? 8}h | OT: {day.otHours ?? 0}h
+                      </span>
+                    </div>
                   </div>
                 )}
                 <div className="text-slate-800 text-justify leading-normal pl-1">
@@ -193,49 +318,117 @@ export default function SiteReportSheet({ report }: SiteReportSheetProps) {
         </div>
       )}
 
-      {/* Attached Photos */}
-      {report.photos && report.photos.length > 0 && (
-        <div className="mb-3 avoid-break">
-          <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider mb-2">
-            Site Photos & Engineering Work Evidence ({report.photos.length})
+      {/* Attached Photos - Grouped by Activity Date */}
+      {photoGroups.length > 0 && (
+        <div className="mb-3.5 avoid-break">
+          <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider mb-2.5 flex items-center justify-between">
+            <span>Site Photos & Engineering Work Evidence ({report.photos.length})</span>
+            {isMultiDay ? (
+              <span className="text-[10px] text-teal-300 font-normal">
+                Grouped by Reporting Date
+              </span>
+            ) : (
+              <span className="text-[10px] text-teal-300 font-normal">
+                Date Labeled
+              </span>
+            )}
           </div>
-          <div
-            className={`grid gap-2 border border-slate-300 p-2 rounded ${
-              report.photos.length === 1
-                ? 'grid-cols-1 max-w-sm mx-auto'
-                : report.photos.length === 3
-                ? 'grid-cols-3'
-                : report.photos.length >= 5
-                ? 'grid-cols-3'
-                : 'grid-cols-2'
-            }`}
-          >
-            {report.photos.map((photo, idx) => (
-              <div key={idx} className="border border-slate-200 p-1.5 pb-2 bg-slate-50 flex flex-col items-center avoid-break">
+
+          <div className="space-y-3">
+            {photoGroups.map((group) => {
+              const photoCount = group.photos.length;
+              const gridColsClass =
+                photoCount === 1
+                  ? 'grid-cols-1 max-w-sm mx-auto'
+                  : photoCount === 3
+                  ? 'grid-cols-3'
+                  : photoCount >= 5
+                  ? 'grid-cols-3'
+                  : 'grid-cols-2';
+
+              const imgHeightClass =
+                photoCount === 1
+                  ? 'h-48'
+                  : photoCount === 3
+                  ? 'h-32'
+                  : photoCount >= 5
+                  ? 'h-28'
+                  : 'h-36';
+
+              return (
                 <div
-                  className={`w-full flex items-center justify-center bg-white overflow-hidden border border-slate-200 ${
-                    report.photos.length === 1
-                      ? 'h-48'
-                      : report.photos.length === 3
-                      ? 'h-32'
-                      : report.photos.length >= 5
-                      ? 'h-28'
-                      : 'h-36'
-                  }`}
+                  key={group.key}
+                  className="border border-slate-300 rounded overflow-hidden avoid-break bg-white shadow-xs"
                 >
-                  <img
-                    src={photo.url}
-                    alt={photo.caption || `Site Photo ${idx + 1}`}
-                    className="max-h-full max-w-full object-contain inline-block"
-                  />
-                </div>
-                {photo.caption && (
-                  <div className="w-full text-[10px] font-medium text-slate-700 mt-1 text-center leading-tight px-1 break-words">
-                    Fig {idx + 1}: {photo.caption}
+                  {/* Group Header (if multi-day or labeled group) */}
+                  {(isMultiDay || photoGroups.length > 1) && (
+                    <div className="bg-slate-100 border-b border-slate-300 px-3 py-1 flex items-center justify-between text-[11px] font-semibold text-slate-800">
+                      <div className="flex items-center gap-2">
+                        {group.dayNumber ? (
+                          <span className="bg-slate-800 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">
+                            Day {group.dayNumber}
+                          </span>
+                        ) : (
+                          <span className="bg-slate-700 text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">
+                            Evidence
+                          </span>
+                        )}
+                        <span className="font-bold text-slate-900">
+                          {group.displayDate ? group.displayDate : group.title}
+                        </span>
+                        {group.dayDescription && (
+                          <span className="text-slate-500 font-normal text-[10px] max-w-[340px] truncate hidden sm:inline">
+                            — {group.dayDescription}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-600 font-mono">
+                        {photoCount} {photoCount === 1 ? 'Photo' : 'Photos'}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Group Photos Grid */}
+                  <div className={`p-2 grid gap-2.5 bg-slate-50/50 ${gridColsClass}`}>
+                    {group.photos.map((photo) => (
+                      <div
+                        key={photo.overallIndex}
+                        className="border border-slate-200 bg-white rounded p-1.5 pb-2 flex flex-col items-center avoid-break shadow-xs"
+                      >
+                        <div
+                          className={`relative w-full flex items-center justify-center bg-slate-100 overflow-hidden border border-slate-200 ${imgHeightClass}`}
+                        >
+                          <img
+                            src={photo.url}
+                            alt={photo.caption || `Site Photo ${photo.overallIndex + 1}`}
+                            className="max-h-full max-w-full object-contain inline-block"
+                          />
+                          {/* Date Label Badge overlay */}
+                          {photo.displayDate && photo.displayDate !== '—' && (
+                            <div className="absolute top-1 left-1 bg-slate-900/85 text-white text-[8px] font-mono font-medium px-1.5 py-0.5 rounded shadow flex items-center gap-1">
+                              <span>📅 {photo.displayDate}</span>
+                              {photo.dayBadge && <span>• {photo.dayBadge}</span>}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Caption and Date Label below */}
+                        <div className="w-full text-center mt-1 px-1">
+                          <div className="text-[10px] font-bold text-slate-800 leading-tight break-words">
+                            Fig {photo.overallIndex + 1}: {photo.caption || 'Site Photo Evidence'}
+                          </div>
+                          {photo.displayDate && photo.displayDate !== '—' && (
+                            <div className="text-[9px] text-slate-500 font-mono mt-0.5">
+                              Date: {photo.displayDate} {photo.dayBadge ? `(${photo.dayBadge})` : ''}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

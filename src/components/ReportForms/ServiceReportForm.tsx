@@ -340,6 +340,8 @@ export default function ServiceReportForm({
           photos={report.photos || []}
           onChange={(newPhotos) => onChange({ ...report, photos: newPhotos })}
           disabled={disabled}
+          defaultDate={report.attendanceDate || report.reportDate}
+          title="Service Photographic Evidence"
         />
       </div>
 

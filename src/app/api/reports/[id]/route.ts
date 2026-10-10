@@ -33,7 +33,15 @@ export async function GET(
       return NextResponse.json({ error: 'Report not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ report });
+    const mappedReport = {
+      ...report,
+      photos: (report.photos || []).map((p) => ({
+        ...p,
+        date: (p as any).date || p.sectionKey || undefined,
+      })),
+    };
+
+    return NextResponse.json({ report: mappedReport });
   } catch (error: any) {
     console.error('Error fetching report:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -136,7 +144,7 @@ export async function PUT(
             reportId: id,
             url: p.url,
             caption: p.caption || '',
-            sectionKey: p.sectionKey || null,
+            sectionKey: p.date || p.sectionKey || null,
           })),
         });
       }
@@ -153,7 +161,15 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json({ success: true, report: updatedReport });
+    const mappedUpdatedReport = {
+      ...updatedReport,
+      photos: (updatedReport.photos || []).map((p) => ({
+        ...p,
+        date: (p as any).date || p.sectionKey || undefined,
+      })),
+    };
+
+    return NextResponse.json({ success: true, report: mappedUpdatedReport });
   } catch (error: any) {
     console.error('Error updating report:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

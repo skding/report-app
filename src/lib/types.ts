@@ -103,6 +103,7 @@ export interface ReportPhotoItem {
   url: string;
   caption?: string;
   sectionKey?: string;
+  date?: string;
 }
 
 export interface FullReport {

@@ -140,11 +140,14 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
       {/* Attached Photos */}
       {report.photos && report.photos.length > 0 && (
         <div className="mb-3 avoid-break">
-          <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider mb-2">
-            Site Photographic Evidence ({report.photos.length})
+          <div className="bg-slate-800 text-white font-bold px-2.5 py-1 text-xs uppercase tracking-wider mb-2 flex items-center justify-between">
+            <span>Site Photographic Evidence ({report.photos.length})</span>
+            <span className="text-[10px] text-teal-300 font-normal">
+              Date Labeled
+            </span>
           </div>
           <div
-            className={`grid gap-2 border border-slate-300 p-2 rounded ${
+            className={`grid gap-2 border border-slate-300 p-2 rounded bg-slate-50/50 ${
               report.photos.length === 1
                 ? 'grid-cols-1 max-w-sm mx-auto'
                 : report.photos.length === 3
@@ -154,32 +157,45 @@ export default function ServiceReportSheet({ report }: ServiceReportSheetProps) 
                 : 'grid-cols-2'
             }`}
           >
-            {report.photos.map((photo, idx) => (
-              <div key={idx} className="border border-slate-200 p-1.5 pb-2 bg-slate-50 flex flex-col items-center avoid-break">
-                <div
-                  className={`w-full flex items-center justify-center bg-white overflow-hidden border border-slate-200 ${
-                    report.photos.length === 1
-                      ? 'h-48'
-                      : report.photos.length === 3
-                      ? 'h-32'
-                      : report.photos.length >= 5
-                      ? 'h-28'
-                      : 'h-36'
-                  }`}
-                >
-                  <img
-                    src={photo.url}
-                    alt={photo.caption || `Site Photo ${idx + 1}`}
-                    className="max-h-full max-w-full object-contain inline-block"
-                  />
-                </div>
-                {photo.caption && (
-                  <div className="w-full text-[10px] font-medium text-slate-700 mt-1 text-center leading-tight px-1 break-words">
-                    Fig {idx + 1}: {photo.caption}
+            {report.photos.map((photo, idx) => {
+              const photoDate = formatPrintDate(photo.date || photo.sectionKey || report.attendanceDate || report.reportDate);
+              return (
+                <div key={idx} className="border border-slate-200 bg-white rounded p-1.5 pb-2 flex flex-col items-center avoid-break shadow-xs">
+                  <div
+                    className={`relative w-full flex items-center justify-center bg-slate-100 overflow-hidden border border-slate-200 ${
+                      report.photos.length === 1
+                        ? 'h-48'
+                        : report.photos.length === 3
+                        ? 'h-32'
+                        : report.photos.length >= 5
+                        ? 'h-28'
+                        : 'h-36'
+                    }`}
+                  >
+                    <img
+                      src={photo.url}
+                      alt={photo.caption || `Site Photo ${idx + 1}`}
+                      className="max-h-full max-w-full object-contain inline-block"
+                    />
+                    {photoDate && photoDate !== '—' && (
+                      <div className="absolute top-1 left-1 bg-slate-900/85 text-white text-[8px] font-mono font-medium px-1.5 py-0.5 rounded shadow">
+                        📅 {photoDate}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
+                  <div className="w-full text-center mt-1 px-1">
+                    <div className="text-[10px] font-bold text-slate-800 leading-tight break-words">
+                      Fig {idx + 1}: {photo.caption || 'Site Photographic Evidence'}
+                    </div>
+                    {photoDate && photoDate !== '—' && (
+                      <div className="text-[9px] text-slate-500 font-mono mt-0.5">
+                        Date: {photoDate}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

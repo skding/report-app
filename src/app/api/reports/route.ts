@@ -170,7 +170,7 @@ export async function POST(req: Request) {
           create: photos.map((p: any) => ({
             url: p.url,
             caption: p.caption || '',
-            sectionKey: p.sectionKey || null,
+            sectionKey: p.date || p.sectionKey || null,
           })),
         } : undefined,
       },
@@ -182,7 +182,15 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, report });
+    const mappedReport = {
+      ...report,
+      photos: (report.photos || []).map((p) => ({
+        ...p,
+        date: (p as any).date || p.sectionKey || undefined,
+      })),
+    };
+
+    return NextResponse.json({ success: true, report: mappedReport });
   } catch (error: any) {
     console.error('Error creating report:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
